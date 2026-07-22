@@ -4,6 +4,7 @@ import { useId, useRef, useState } from "react";
 import { Upload, X, Loader2, CheckCircle2, AlertTriangle } from "lucide-react";
 import {
   SERVICE_CITIES,
+  PROPERTY_TYPES,
   SERVICES,
   CONTACT_METHODS,
   BUDGET_RANGES,
@@ -20,6 +21,7 @@ const initialFields = {
   fullName: "",
   email: "",
   city: "",
+  propertyType: "",
   projectType: "",
   description: "",
   contactMethod: "",
@@ -92,6 +94,7 @@ export default function QuoteForm() {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fields.email))
       next.email = "Please enter a valid email address.";
     if (!fields.city) next.city = "Please select your city.";
+    if (!fields.propertyType) next.propertyType = "Please select a property type.";
     if (!fields.projectType) next.projectType = "Please select a project type.";
     if (fields.description.trim().length < 10)
       next.description = "Please describe the project (at least 10 characters).";
@@ -122,6 +125,7 @@ export default function QuoteForm() {
       payload.append("fullName", fields.fullName);
       payload.append("email", fields.email);
       payload.append("city", fields.city);
+      payload.append("propertyType", fields.propertyType);
       payload.append("projectType", fields.projectType);
       payload.append("description", fields.description);
       payload.append("contactMethod", fields.contactMethod);
@@ -235,6 +239,30 @@ export default function QuoteForm() {
           {SERVICE_CITIES.map((city) => (
             <option key={city} value={city}>
               {city}
+            </option>
+          ))}
+        </select>
+      </Field>
+
+      <Field
+        id={`${formId}-propertyType`}
+        label="Property Type"
+        required
+        error={errors.propertyType}
+      >
+        <select
+          id={`${formId}-propertyType`}
+          name="propertyType"
+          value={fields.propertyType}
+          onChange={(e) => updateField("propertyType", e.target.value)}
+          aria-invalid={!!errors.propertyType}
+          aria-describedby={errors.propertyType ? `${formId}-propertyType-error` : undefined}
+          className={inputClass(errors.propertyType)}
+        >
+          <option value="">Select property type&hellip;</option>
+          {PROPERTY_TYPES.map((type) => (
+            <option key={type} value={type}>
+              {type}
             </option>
           ))}
         </select>

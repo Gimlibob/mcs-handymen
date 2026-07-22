@@ -9,6 +9,7 @@ import {
   Tv,
   Hammer,
   Building2,
+  Briefcase,
 } from "lucide-react";
 import { SERVICES } from "@/lib/site-config";
 
@@ -23,6 +24,7 @@ const ICONS = {
   "tv-mounting": Tv,
   "small-home-repairs": Hammer,
   "property-turnover": Building2,
+  "light-commercial": Briefcase,
 };
 
 export default function Services() {
@@ -53,7 +55,9 @@ export default function Services() {
         </div>
 
         <p className="mt-8 text-center text-sm text-muted">
-          No roofing &bull; No major structural work &bull; Labor only — materials extra
+          Small repairs &amp; maintenance only &bull; No roofing &bull; No major remodeling or
+          structural work &bull; No major plumbing or electrical &bull; Labor only — materials
+          extra
         </p>
       </div>
     </section>

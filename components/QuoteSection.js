@@ -8,8 +8,8 @@ export default function QuoteSection() {
           Request a Quote
         </h2>
         <p className="mt-3 text-center text-sm text-muted">
-          Fill out the form below and include a few photos — it&apos;s the fastest way to get an
-          accurate quote.
+          Fill out the form below and include a few photos so we can review your project and send a
+          quote.
         </p>
         <div className="mt-8">
           <QuoteForm />

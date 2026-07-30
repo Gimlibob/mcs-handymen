@@ -1,6 +1,7 @@
 import { Camera } from "lucide-react";
 import FacebookIcon from "./icons/FacebookIcon";
 import { PrimaryLink, SecondaryLink } from "./Buttons";
+import ServiceAreaMap from "./ServiceAreaMap";
 import { FACEBOOK_URL } from "@/lib/site-config";
 
 export default function Hero() {
@@ -18,7 +19,7 @@ export default function Hero() {
         <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/85 to-background" />
       </div>
 
-      <div className="relative mx-auto flex max-w-3xl flex-col items-center px-4 py-16 text-center sm:px-6 sm:py-24">
+      <div className="relative mx-auto flex max-w-3xl flex-col items-center px-4 py-16 text-center sm:px-6 sm:pb-10 sm:pt-24">
         <h1 className="font-heading text-3xl font-bold leading-tight text-foreground sm:text-4xl md:text-5xl">
           Small Repairs &amp;
           <br />
@@ -43,10 +44,10 @@ export default function Hero() {
             Visit Us on Facebook
           </SecondaryLink>
         </div>
+      </div>
 
-        <p className="mt-6 text-sm text-muted">
-          Serving Manvel, Iowa Colony &amp; Rosharon, TX.
-        </p>
+      <div className="relative pb-12">
+        <ServiceAreaMap />
       </div>
     </section>
   );

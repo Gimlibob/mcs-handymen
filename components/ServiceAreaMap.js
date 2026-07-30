@@ -1,7 +1,6 @@
 /**
  * Google Map of the general service region (south Houston area).
- * Constrained to content width (not full desktop bleed).
- * No place pin / address — view-only embed + subtle gold region overlay.
+ * Constrained to content width. Static view — no pin, no drag away from region.
  */
 export default function ServiceAreaMap() {
   // Centered on the Manvel / Iowa Colony / Rosharon / Pearland / Alvin /
@@ -24,19 +23,11 @@ export default function ServiceAreaMap() {
           <iframe
             title="Service area map"
             src={mapSrc}
-            className="absolute inset-0 h-full w-full border-0 grayscale-[20%] contrast-[1.05]"
+            className="pointer-events-none absolute inset-0 h-full w-full border-0 grayscale-[20%] contrast-[1.05]"
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
-            allowFullScreen
+            tabIndex={-1}
           />
-
-          {/* Subtle gold service-region outline (visual only — no labels or pins) */}
-          <div
-            className="pointer-events-none absolute inset-0 flex items-center justify-center"
-            aria-hidden="true"
-          >
-            <div className="h-[72%] w-[78%] rounded-full border-2 border-gold/45 bg-gold/10 shadow-[0_0_40px_rgba(205,164,76,0.12)] md:h-[78%] md:w-[70%]" />
-          </div>
 
           {/* Soft edge fade into the black page chrome */}
           <div

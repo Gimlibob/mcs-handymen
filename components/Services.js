@@ -1,16 +1,29 @@
 import {
-  Video,
+  Fan,
+  Wrench,
   PaintRoller,
+  Package,
+  DoorClosed,
+  PanelTop,
+  LayoutGrid,
+  Tv,
+  Video,
   Wind,
   BellRing,
   Droplets,
-  DoorClosed,
 } from "lucide-react";
 import { SERVICES } from "@/lib/site-config";
 
 const ICONS = {
+  "ceiling-fan-light": Fan,
+  "plumbing-fixture": Wrench,
+  "drywall-patching": PaintRoller,
+  "furniture-assembly": Package,
+  "door-lock-hardware": DoorClosed,
+  rescreening: PanelTop,
+  "wall-mounts-shelving": LayoutGrid,
+  "tv-mounting": Tv,
   "doorbell-cameras": Video,
-  "drywall-repair": PaintRoller,
   "air-filter-swaps": Wind,
   "smoke-detectors": BellRing,
   "caulking-sealing": Droplets,
@@ -31,7 +44,7 @@ export default function Services() {
           extra &bull; Minimum service call fee applies
         </p>
 
-        <div className="mx-auto mt-10 grid max-w-3xl grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+        <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4">
           {SERVICES.map((service) => {
             const Icon = ICONS[service.id] ?? DoorClosed;
             return (

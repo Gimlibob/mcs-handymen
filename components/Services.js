@@ -1,30 +1,20 @@
 import {
-  Fan,
-  Wrench,
+  Video,
   PaintRoller,
-  Package,
+  Wind,
+  BellRing,
+  Droplets,
   DoorClosed,
-  PanelTop,
-  LayoutGrid,
-  Tv,
-  Hammer,
-  Building2,
-  Briefcase,
 } from "lucide-react";
 import { SERVICES } from "@/lib/site-config";
 
 const ICONS = {
-  "ceiling-fan-light": Fan,
-  "plumbing-fixture": Wrench,
-  "drywall-patching": PaintRoller,
-  "furniture-assembly": Package,
-  "door-lock-hardware": DoorClosed,
-  rescreening: PanelTop,
-  "wall-mounts-shelving": LayoutGrid,
-  "tv-mounting": Tv,
-  "small-home-repairs": Hammer,
-  "property-turnover": Building2,
-  "light-commercial": Briefcase,
+  "doorbell-cameras": Video,
+  "drywall-repair": PaintRoller,
+  "air-filter-swaps": Wind,
+  "smoke-detectors": BellRing,
+  "caulking-sealing": Droplets,
+  "hollow-core-door": DoorClosed,
 };
 
 export default function Services() {
@@ -37,13 +27,13 @@ export default function Services() {
 
         <p className="mx-auto mt-5 max-w-3xl rounded-xl border border-gold/50 bg-surface-2 px-4 py-3.5 text-center text-sm leading-relaxed text-gold-bright sm:px-6 sm:text-base">
           Small repairs &amp; maintenance only &bull; No roofing &bull; No major remodeling or
-          structural work &bull; No major plumbing or electrical &bull; Labor only materials
-          extra
+          structural work &bull; No major plumbing or electrical &bull; Labor only — materials
+          extra &bull; Minimum service call fee applies
         </p>
 
-        <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-5">
+        <div className="mx-auto mt-10 grid max-w-3xl grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
           {SERVICES.map((service) => {
-            const Icon = ICONS[service.id] ?? Hammer;
+            const Icon = ICONS[service.id] ?? DoorClosed;
             return (
               <div
                 key={service.id}

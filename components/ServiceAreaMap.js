@@ -1,13 +1,268 @@
-/**
- * Google Map of the general service region (south Houston area).
- * Constrained to content width. Static view — no pin, no drag away from region.
- */
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { ExternalLink } from "lucide-react";
+import "leaflet/dist/leaflet.css";
+
+/** Exact golden polygon vertices [lat, lng] — NW → NE → SE → SW */
+export const SERVICE_POLYGON = [
+  [29.5042, -95.4373],
+  [29.5273, -95.3581],
+  [29.3901, -95.3621],
+  [29.3912, -95.4601],
+];
+
+/** Operational base (map center only — never shown as a pin/address on the page) */
+export const MAP_CENTER = { lat: 29.4243, lng: -95.3709 };
+
+const GOLD_STROKE = "#d4af37";
+const GOLD_FILL_OPACITY = 0.2;
+
+const GOOGLE_MAPS_URL = `https://www.google.com/maps/@${MAP_CENTER.lat},${MAP_CENTER.lng},12z`;
+
+/** Google Maps dark style array — matches site black/gold chrome */
+const DARK_MAP_STYLES = [
+  { elementType: "geometry", stylers: [{ color: "#1a1a1a" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#1a1a1a" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#8a8a8a" }] },
+  {
+    featureType: "administrative",
+    elementType: "geometry.stroke",
+    stylers: [{ color: "#2e2e2e" }],
+  },
+  {
+    featureType: "administrative.locality",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#9a9a9a" }],
+  },
+  {
+    featureType: "poi",
+    stylers: [{ visibility: "off" }],
+  },
+  {
+    featureType: "poi.park",
+    elementType: "geometry",
+    stylers: [{ color: "#181818" }],
+  },
+  {
+    featureType: "road",
+    elementType: "geometry",
+    stylers: [{ color: "#2a2a2a" }],
+  },
+  {
+    featureType: "road",
+    elementType: "geometry.stroke",
+    stylers: [{ color: "#1f1f1f" }],
+  },
+  {
+    featureType: "road.highway",
+    elementType: "geometry",
+    stylers: [{ color: "#3a3a3a" }],
+  },
+  {
+    featureType: "road.highway",
+    elementType: "geometry.stroke",
+    stylers: [{ color: "#1f1f1f" }],
+  },
+  {
+    featureType: "transit",
+    stylers: [{ visibility: "off" }],
+  },
+  {
+    featureType: "water",
+    elementType: "geometry",
+    stylers: [{ color: "#0e0e0e" }],
+  },
+  {
+    featureType: "water",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#5a5a5a" }],
+  },
+];
+
+function loadGoogleMaps(apiKey) {
+  if (typeof window === "undefined") return Promise.reject();
+  if (window.google?.maps) return Promise.resolve(window.google.maps);
+
+  const existing = document.querySelector("script[data-mcs-google-maps]");
+  if (existing) {
+    return new Promise((resolve, reject) => {
+      existing.addEventListener("load", () => resolve(window.google.maps));
+      existing.addEventListener("error", reject);
+    });
+  }
+
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}`;
+    script.async = true;
+    script.defer = true;
+    script.dataset.mcsGoogleMaps = "true";
+    script.onload = () => resolve(window.google.maps);
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+}
+
+function initGoogleMap(container, maps, interactive) {
+  const map = new maps.Map(container, {
+    center: MAP_CENTER,
+    zoom: 11,
+    disableDefaultUI: true,
+    zoomControl: interactive,
+    gestureHandling: interactive ? "greedy" : "none",
+    draggable: interactive,
+    scrollwheel: interactive,
+    disableDoubleClickZoom: !interactive,
+    keyboardShortcuts: interactive,
+    styles: DARK_MAP_STYLES,
+    backgroundColor: "#0a0a0a",
+  });
+
+  new maps.Polygon({
+    paths: SERVICE_POLYGON.map(([lat, lng]) => ({ lat, lng })),
+    strokeColor: GOLD_STROKE,
+    strokeOpacity: 1,
+    strokeWeight: 2,
+    fillColor: GOLD_STROKE,
+    fillOpacity: GOLD_FILL_OPACITY,
+    map,
+    clickable: false,
+  });
+
+  return map;
+}
+
+async function initLeafletMap(container, interactive) {
+  const L = (await import("leaflet")).default;
+
+  const map = L.map(container, {
+    center: [MAP_CENTER.lat, MAP_CENTER.lng],
+    zoom: 11,
+    zoomControl: interactive,
+    dragging: interactive,
+    touchZoom: interactive,
+    scrollWheelZoom: interactive,
+    doubleClickZoom: interactive,
+    boxZoom: interactive,
+    keyboard: interactive,
+    attributionControl: true,
+  });
+
+  L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
+    subdomains: "abcd",
+    maxZoom: 19,
+  }).addTo(map);
+
+  L.polygon(SERVICE_POLYGON, {
+    color: GOLD_STROKE,
+    weight: 2,
+    fillColor: GOLD_STROKE,
+    fillOpacity: GOLD_FILL_OPACITY,
+    interactive: false,
+  }).addTo(map);
+
+  // Ensure layout calculates correctly inside rounded container
+  setTimeout(() => map.invalidateSize(), 50);
+
+  return map;
+}
+
 export default function ServiceAreaMap() {
-  // Centered on the Manvel / Iowa Colony / Rosharon / Pearland / Alvin /
-  // Fresno / Arcola corridor. Zoomed out to show the region, not a single address.
-  // Uses ll= (center) without q= so Google does not drop a business pin.
-  const mapSrc =
-    "https://maps.google.com/maps?ll=29.455,-95.38&z=10&hl=en&t=m&output=embed";
+  const containerRef = useRef(null);
+  const mapInstanceRef = useRef(null);
+  const [shouldLoad, setShouldLoad] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [engine, setEngine] = useState("loading"); // loading | google | leaflet | error
+
+  // Track viewport < 768px for scroll-safe mobile behavior
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
+  // Lazy-load map only when section enters viewport (PageSpeed-friendly)
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return undefined;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setShouldLoad(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  // Initialize map once visible
+  useEffect(() => {
+    if (!shouldLoad || !containerRef.current) return undefined;
+
+    let cancelled = false;
+    const interactive = !isMobile;
+    const node = containerRef.current;
+
+    async function setup() {
+      // Tear down previous instance when switching mobile/desktop interaction mode
+      if (mapInstanceRef.current) {
+        try {
+          if (mapInstanceRef.current.remove) mapInstanceRef.current.remove();
+          else if (mapInstanceRef.current.setOptions) {
+            // Google Map — destroy by clearing container
+            node.innerHTML = "";
+          }
+        } catch {
+          node.innerHTML = "";
+        }
+        mapInstanceRef.current = null;
+      }
+
+      const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+      try {
+        if (apiKey) {
+          const maps = await loadGoogleMaps(apiKey);
+          if (cancelled) return;
+          mapInstanceRef.current = initGoogleMap(node, maps, interactive);
+          setEngine("google");
+        } else {
+          mapInstanceRef.current = await initLeafletMap(node, interactive);
+          if (cancelled) return;
+          setEngine("leaflet");
+        }
+      } catch {
+        if (cancelled) return;
+        // Fallback if Google Maps fails to load
+        try {
+          node.innerHTML = "";
+          mapInstanceRef.current = await initLeafletMap(node, interactive);
+          setEngine("leaflet");
+        } catch {
+          setEngine("error");
+        }
+      }
+    }
+
+    setup();
+
+    return () => {
+      cancelled = true;
+      if (mapInstanceRef.current?.remove) {
+        mapInstanceRef.current.remove();
+      }
+      mapInstanceRef.current = null;
+    };
+  }, [shouldLoad, isMobile]);
 
   return (
     <div className="mx-auto mt-10 w-full max-w-3xl px-4 sm:px-6">
@@ -18,22 +273,48 @@ export default function ServiceAreaMap() {
         <p className="mt-2 text-base text-muted">We come to you.</p>
       </div>
 
-      <div className="relative mt-5 w-full overflow-hidden rounded-xl border border-border-soft bg-surface">
-        <div className="relative h-[220px] w-full md:h-[340px]">
-          <iframe
-            title="Service area map"
-            src={mapSrc}
-            className="pointer-events-none absolute inset-0 h-full w-full border-0 grayscale-[20%] contrast-[1.05]"
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-            tabIndex={-1}
+      <div className="mt-5 w-full">
+        <div
+          className={`relative w-full overflow-hidden rounded-xl border border-border-soft bg-surface ${
+            isMobile ? "pointer-events-none" : ""
+          }`}
+        >
+          <div
+            ref={containerRef}
+            className="h-[220px] w-full md:h-[340px]"
+            role="img"
+            aria-label="Map of MCS Handymen service area"
           />
 
-          {/* Soft edge fade into the black page chrome */}
+          {engine === "loading" && (
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-surface text-sm text-muted">
+              Loading map…
+            </div>
+          )}
+
+          {engine === "error" && (
+            <div className="absolute inset-0 flex items-center justify-center bg-surface px-4 text-center text-sm text-muted">
+              Map unavailable. Use the link below to open the area in Google Maps.
+            </div>
+          )}
+
           <div
-            className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background/25 via-transparent to-background/40"
+            className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background/20 via-transparent to-background/35"
             aria-hidden="true"
           />
+        </div>
+
+        {/* Mobile: external link so users can explore without scroll-trapping the page */}
+        <div className={`mt-3 flex justify-center ${isMobile ? "" : "md:justify-end"}`}>
+          <a
+            href={GOOGLE_MAPS_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-gold/50 bg-surface px-4 py-2.5 text-sm font-medium text-gold-bright transition-colors hover:border-gold hover:bg-surface-2"
+          >
+            <ExternalLink className="h-4 w-4" aria-hidden="true" />
+            View in Google Maps
+          </a>
         </div>
       </div>
     </div>

@@ -35,6 +35,12 @@ export default function Services() {
           Services We Handle
         </h2>
 
+        <p className="mx-auto mt-5 max-w-3xl rounded-xl border border-gold/50 bg-surface-2 px-4 py-3.5 text-center text-sm leading-relaxed text-gold-bright sm:px-6 sm:text-base">
+          Small repairs &amp; maintenance only &bull; No roofing &bull; No major remodeling or
+          structural work &bull; No major plumbing or electrical &bull; Labor only — materials
+          extra
+        </p>
+
         <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-5">
           {SERVICES.map((service) => {
             const Icon = ICONS[service.id] ?? Hammer;
@@ -53,12 +59,6 @@ export default function Services() {
             );
           })}
         </div>
-
-        <p className="mt-8 text-center text-sm text-muted">
-          Small repairs &amp; maintenance only &bull; No roofing &bull; No major remodeling or
-          structural work &bull; No major plumbing or electrical &bull; Labor only — materials
-          extra
-        </p>
       </div>
     </section>
   );

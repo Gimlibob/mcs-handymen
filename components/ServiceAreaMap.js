@@ -20,66 +20,6 @@ const GOLD_FILL_OPACITY = 0.2;
 
 const GOOGLE_MAPS_URL = `https://www.google.com/maps/@${MAP_CENTER.lat},${MAP_CENTER.lng},12z`;
 
-/** Google Maps dark style array — matches site black/gold chrome */
-const DARK_MAP_STYLES = [
-  { elementType: "geometry", stylers: [{ color: "#1a1a1a" }] },
-  { elementType: "labels.text.stroke", stylers: [{ color: "#1a1a1a" }] },
-  { elementType: "labels.text.fill", stylers: [{ color: "#8a8a8a" }] },
-  {
-    featureType: "administrative",
-    elementType: "geometry.stroke",
-    stylers: [{ color: "#2e2e2e" }],
-  },
-  {
-    featureType: "administrative.locality",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#9a9a9a" }],
-  },
-  {
-    featureType: "poi",
-    stylers: [{ visibility: "off" }],
-  },
-  {
-    featureType: "poi.park",
-    elementType: "geometry",
-    stylers: [{ color: "#181818" }],
-  },
-  {
-    featureType: "road",
-    elementType: "geometry",
-    stylers: [{ color: "#2a2a2a" }],
-  },
-  {
-    featureType: "road",
-    elementType: "geometry.stroke",
-    stylers: [{ color: "#1f1f1f" }],
-  },
-  {
-    featureType: "road.highway",
-    elementType: "geometry",
-    stylers: [{ color: "#3a3a3a" }],
-  },
-  {
-    featureType: "road.highway",
-    elementType: "geometry.stroke",
-    stylers: [{ color: "#1f1f1f" }],
-  },
-  {
-    featureType: "transit",
-    stylers: [{ visibility: "off" }],
-  },
-  {
-    featureType: "water",
-    elementType: "geometry",
-    stylers: [{ color: "#0e0e0e" }],
-  },
-  {
-    featureType: "water",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#5a5a5a" }],
-  },
-];
-
 function loadGoogleMaps(apiKey) {
   if (typeof window === "undefined") return Promise.reject();
   if (window.google?.maps) return Promise.resolve(window.google.maps);
@@ -115,8 +55,7 @@ function initGoogleMap(container, maps, interactive) {
     scrollwheel: interactive,
     disableDoubleClickZoom: !interactive,
     keyboardShortcuts: interactive,
-    styles: DARK_MAP_STYLES,
-    backgroundColor: "#0a0a0a",
+    backgroundColor: "#e5e3df",
   });
 
   new maps.Polygon({
@@ -149,7 +88,7 @@ async function initLeafletMap(container, interactive) {
     attributionControl: true,
   });
 
-  L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+  L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
     subdomains: "abcd",
     maxZoom: 19,
@@ -297,11 +236,6 @@ export default function ServiceAreaMap() {
               Map unavailable. Use the link below to open the area in Google Maps.
             </div>
           )}
-
-          <div
-            className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background/20 via-transparent to-background/35"
-            aria-hidden="true"
-          />
         </div>
 
         {/* Mobile: external link so users can explore without scroll-trapping the page */}

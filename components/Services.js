@@ -37,7 +37,7 @@ export default function Services() {
 
         <p className="mx-auto mt-5 max-w-3xl rounded-xl border border-gold/50 bg-surface-2 px-4 py-3.5 text-center text-sm leading-relaxed text-gold-bright sm:px-6 sm:text-base">
           Small repairs &amp; maintenance only &bull; No roofing &bull; No major remodeling or
-          structural work &bull; No major plumbing or electrical &bull; Labor only — materials
+          structural work &bull; No major plumbing or electrical &bull; Labor only materials
           extra
         </p>
 

@@ -12,11 +12,12 @@ export const SERVICE_POLYGON = [
   [29.3912, -95.4601],
 ];
 
-/** Operational base (map center only — never shown as a pin/address on the page) */
+/** Operational base (fallback center only — never shown as a pin/address) */
 export const MAP_CENTER = { lat: 29.4243, lng: -95.3709 };
 
 const GOLD_STROKE = "#d4af37";
 const GOLD_FILL_OPACITY = 0.2;
+const FIT_PADDING = 20;
 
 const GOOGLE_MAPS_URL = `https://www.google.com/maps/@${MAP_CENTER.lat},${MAP_CENTER.lng},12z`;
 
@@ -44,17 +45,27 @@ function loadGoogleMaps(apiKey) {
   });
 }
 
-function initGoogleMap(container, maps, interactive) {
+function fitGooglePolygon(map, maps) {
+  const bounds = new maps.LatLngBounds();
+  SERVICE_POLYGON.forEach(([lat, lng]) => bounds.extend({ lat, lng }));
+  map.fitBounds(bounds, {
+    top: FIT_PADDING,
+    right: FIT_PADDING,
+    bottom: FIT_PADDING,
+    left: FIT_PADDING,
+  });
+}
+
+function initGoogleMap(container, maps) {
   const map = new maps.Map(container, {
     center: MAP_CENTER,
     zoom: 11,
     disableDefaultUI: true,
-    zoomControl: interactive,
-    gestureHandling: interactive ? "greedy" : "none",
-    draggable: interactive,
-    scrollwheel: interactive,
-    disableDoubleClickZoom: !interactive,
-    keyboardShortcuts: interactive,
+    zoomControl: true,
+    // Pan/zoom freely on the map; page still scrolls when touch starts outside it
+    gestureHandling: "greedy",
+    draggable: true,
+    scrollwheel: true,
     backgroundColor: "#e5e3df",
   });
 
@@ -69,32 +80,37 @@ function initGoogleMap(container, maps, interactive) {
     clickable: false,
   });
 
+  fitGooglePolygon(map, maps);
+  maps.event.addListenerOnce(map, "idle", () => fitGooglePolygon(map, maps));
+
+  map.__mcsFit = () => fitGooglePolygon(map, maps);
   return map;
 }
 
-async function initLeafletMap(container, interactive) {
+async function initLeafletMap(container) {
   const L = (await import("leaflet")).default;
 
   const map = L.map(container, {
     center: [MAP_CENTER.lat, MAP_CENTER.lng],
     zoom: 11,
-    zoomControl: interactive,
-    dragging: interactive,
-    touchZoom: interactive,
-    scrollWheelZoom: interactive,
-    doubleClickZoom: interactive,
-    boxZoom: interactive,
-    keyboard: interactive,
+    zoomControl: true,
+    dragging: true,
+    touchZoom: true,
+    scrollWheelZoom: true,
+    doubleClickZoom: true,
+    boxZoom: true,
+    keyboard: true,
     attributionControl: true,
   });
 
   L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
     subdomains: "abcd",
     maxZoom: 19,
   }).addTo(map);
 
-  L.polygon(SERVICE_POLYGON, {
+  const polygon = L.polygon(SERVICE_POLYGON, {
     color: GOLD_STROKE,
     weight: 2,
     fillColor: GOLD_STROKE,
@@ -102,9 +118,17 @@ async function initLeafletMap(container, interactive) {
     interactive: false,
   }).addTo(map);
 
-  // Ensure layout calculates correctly inside rounded container
-  setTimeout(() => map.invalidateSize(), 50);
+  function fitPolygon() {
+    map.invalidateSize();
+    map.fitBounds(polygon.getBounds(), { padding: [FIT_PADDING, FIT_PADDING] });
+  }
 
+  fitPolygon();
+  setTimeout(fitPolygon, 50);
+  setTimeout(fitPolygon, 250);
+  map.whenReady(fitPolygon);
+
+  map.__mcsFit = fitPolygon;
   return map;
 }
 
@@ -112,19 +136,8 @@ export default function ServiceAreaMap() {
   const containerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const [shouldLoad, setShouldLoad] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
   const [engine, setEngine] = useState("loading"); // loading | google | leaflet | error
 
-  // Track viewport < 768px for scroll-safe mobile behavior
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 767px)");
-    const update = () => setIsMobile(mq.matches);
-    update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, []);
-
-  // Lazy-load map only when section enters viewport (PageSpeed-friendly)
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return undefined;
@@ -143,23 +156,17 @@ export default function ServiceAreaMap() {
     return () => observer.disconnect();
   }, []);
 
-  // Initialize map once visible
   useEffect(() => {
     if (!shouldLoad || !containerRef.current) return undefined;
 
     let cancelled = false;
-    const interactive = !isMobile;
     const node = containerRef.current;
 
     async function setup() {
-      // Tear down previous instance when switching mobile/desktop interaction mode
       if (mapInstanceRef.current) {
         try {
           if (mapInstanceRef.current.remove) mapInstanceRef.current.remove();
-          else if (mapInstanceRef.current.setOptions) {
-            // Google Map — destroy by clearing container
-            node.innerHTML = "";
-          }
+          else node.innerHTML = "";
         } catch {
           node.innerHTML = "";
         }
@@ -172,19 +179,18 @@ export default function ServiceAreaMap() {
         if (apiKey) {
           const maps = await loadGoogleMaps(apiKey);
           if (cancelled) return;
-          mapInstanceRef.current = initGoogleMap(node, maps, interactive);
+          mapInstanceRef.current = initGoogleMap(node, maps);
           setEngine("google");
         } else {
-          mapInstanceRef.current = await initLeafletMap(node, interactive);
+          mapInstanceRef.current = await initLeafletMap(node);
           if (cancelled) return;
           setEngine("leaflet");
         }
       } catch {
         if (cancelled) return;
-        // Fallback if Google Maps fails to load
         try {
           node.innerHTML = "";
-          mapInstanceRef.current = await initLeafletMap(node, interactive);
+          mapInstanceRef.current = await initLeafletMap(node);
           setEngine("leaflet");
         } catch {
           setEngine("error");
@@ -194,14 +200,21 @@ export default function ServiceAreaMap() {
 
     setup();
 
+    function onResize() {
+      mapInstanceRef.current?.__mcsFit?.();
+    }
+
+    window.addEventListener("resize", onResize);
+
     return () => {
       cancelled = true;
+      window.removeEventListener("resize", onResize);
       if (mapInstanceRef.current?.remove) {
         mapInstanceRef.current.remove();
       }
       mapInstanceRef.current = null;
     };
-  }, [shouldLoad, isMobile]);
+  }, [shouldLoad]);
 
   return (
     <div className="mx-auto mt-10 w-full max-w-3xl px-4 sm:px-6">
@@ -213,16 +226,12 @@ export default function ServiceAreaMap() {
       </div>
 
       <div className="mt-5 w-full">
-        <div
-          className={`relative w-full overflow-hidden rounded-xl border border-border-soft bg-surface ${
-            isMobile ? "pointer-events-none" : ""
-          }`}
-        >
+        <div className="relative w-full overflow-hidden rounded-xl border border-border-soft bg-surface">
           <div
             ref={containerRef}
-            className="h-[220px] w-full md:h-[340px]"
-            role="img"
-            aria-label="Map of MCS Handymen service area"
+            className="h-[220px] w-full touch-manipulation md:h-[340px]"
+            role="application"
+            aria-label="Interactive map of MCS Handymen service area"
           />
 
           {engine === "loading" && (
@@ -238,8 +247,7 @@ export default function ServiceAreaMap() {
           )}
         </div>
 
-        {/* Mobile: external link so users can explore without scroll-trapping the page */}
-        <div className={`mt-3 flex justify-center ${isMobile ? "" : "md:justify-end"}`}>
+        <div className="mt-3 flex justify-center md:justify-end">
           <a
             href={GOOGLE_MAPS_URL}
             target="_blank"

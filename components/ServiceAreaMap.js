@@ -7,7 +7,7 @@ import "leaflet/dist/leaflet.css";
 /** Exact golden polygon vertices [lat, lng] — NW → NE → SE → SW */
 export const SERVICE_POLYGON = [
   [29.5042, -95.4373],
-  [29.5273, -95.3581],
+  [29.528417, -95.348833],
   [29.3901, -95.3621],
   [29.3912, -95.4601],
 ];

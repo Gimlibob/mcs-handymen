@@ -1,4 +1,4 @@
-import { Camera } from "lucide-react";
+import { Camera, Shield } from "lucide-react";
 import FacebookIcon from "./icons/FacebookIcon";
 import { PrimaryLink, SecondaryLink } from "./Buttons";
 import ServiceAreaMap from "./ServiceAreaMap";
@@ -29,6 +29,11 @@ export default function Hero() {
         <p className="mt-5 max-w-xl text-base leading-relaxed text-muted sm:text-lg">
           For homes, rental property maintenance &amp; light commercial service.
         </p>
+
+        <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-gold/50 bg-surface/80 px-4 py-2 text-sm font-medium text-gold-bright shadow-[0_0_24px_rgba(205,164,76,0.08)]">
+          <Shield className="h-4 w-4 shrink-0" aria-hidden="true" strokeWidth={2} />
+          <span>Fully Insured (General Liability)</span>
+        </div>
 
         <div className="mt-8 flex w-full flex-col items-center gap-3 sm:flex-row sm:justify-center">
           <PrimaryLink href="#quote" className="sm:min-w-[240px]">

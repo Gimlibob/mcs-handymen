@@ -27,11 +27,7 @@ export default function Hero() {
         </h1>
 
         <p className="mt-5 max-w-xl text-base leading-relaxed text-muted sm:text-lg">
-          For homes, rentals &amp; small businesses.
-          <br />
-          Rescreening, furniture assembly, wall mounting,
-          <br />
-          and practical maintenance help.
+          For homes, rental property maintenance &amp; light commercial service.
         </p>
 
         <div className="mt-8 flex w-full flex-col items-center gap-3 sm:flex-row sm:justify-center">

@@ -1,8 +1,5 @@
-import { Camera, Shield } from "lucide-react";
-import FacebookIcon from "./icons/FacebookIcon";
-import { PrimaryLink, SecondaryLink } from "./Buttons";
+import { Shield } from "lucide-react";
 import ServiceAreaMap from "./ServiceAreaMap";
-import { FACEBOOK_URL } from "@/lib/site-config";
 
 export default function Hero() {
   return (
@@ -33,17 +30,6 @@ export default function Hero() {
         <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-gold/50 bg-surface/80 px-4 py-2 text-sm font-medium text-gold-bright shadow-[0_0_24px_rgba(205,164,76,0.08)]">
           <Shield className="h-4 w-4 shrink-0" aria-hidden="true" strokeWidth={2} />
           <span>Fully Insured (General Liability)</span>
-        </div>
-
-        <div className="mt-8 flex w-full flex-col items-center gap-3 sm:flex-row sm:justify-center">
-          <PrimaryLink href="#quote" className="sm:min-w-[240px]">
-            <Camera className="h-5 w-5" aria-hidden="true" />
-            Send Project Photos
-          </PrimaryLink>
-          <SecondaryLink href={FACEBOOK_URL} external className="sm:min-w-[240px]">
-            <FacebookIcon className="h-5 w-5" />
-            Visit Us on Facebook
-          </SecondaryLink>
         </div>
       </div>
 

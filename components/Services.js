@@ -11,8 +11,11 @@ import {
   Wind,
   BellRing,
   Droplets,
+  Camera,
 } from "lucide-react";
-import { SERVICES } from "@/lib/site-config";
+import { SERVICES, FACEBOOK_URL } from "@/lib/site-config";
+import { PrimaryLink, SecondaryLink } from "./Buttons";
+import FacebookIcon from "./icons/FacebookIcon";
 
 const ICONS = {
   "ceiling-fan-light": Fan,
@@ -61,6 +64,17 @@ export default function Services() {
               </div>
             );
           })}
+        </div>
+
+        <div className="mx-auto mt-10 flex w-full max-w-xl flex-col items-center gap-3 sm:flex-row sm:justify-center">
+          <PrimaryLink href="#quote" className="sm:min-w-[240px]">
+            <Camera className="h-5 w-5" aria-hidden="true" />
+            Send Project Photos
+          </PrimaryLink>
+          <SecondaryLink href={FACEBOOK_URL} external className="sm:min-w-[240px]">
+            <FacebookIcon className="h-5 w-5" />
+            Visit Us on Facebook
+          </SecondaryLink>
         </div>
       </div>
     </section>

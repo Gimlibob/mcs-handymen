@@ -1,7 +1,7 @@
 import { Mail } from "lucide-react";
 import FacebookIcon from "./icons/FacebookIcon";
 import Logo from "./Logo";
-import { SERVICE_AREA, FACEBOOK_URL, BACKUP_EMAIL } from "@/lib/site-config";
+import { SERVICE_AREA, FACEBOOK_URL, BACKUP_EMAIL, MAILTO_HREF } from "@/lib/site-config";
 
 export default function Footer() {
   return (
@@ -22,7 +22,7 @@ export default function Footer() {
             Facebook
           </a>
           <a
-            href={`mailto:${BACKUP_EMAIL}`}
+            href={MAILTO_HREF}
             className="inline-flex items-center gap-2 text-sm text-muted/80 transition-colors hover:text-gold-bright"
           >
             <Mail className="h-4 w-4" aria-hidden="true" />

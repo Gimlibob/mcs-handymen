@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Fan,
   Wrench,
@@ -17,6 +19,7 @@ import {
   SquareStack,
 } from "lucide-react";
 import { SERVICES, FACEBOOK_URL } from "@/lib/site-config";
+import { selectServiceInquiry } from "@/lib/service-inquiry";
 import { PrimaryLink, SecondaryLink } from "./Buttons";
 import FacebookIcon from "./icons/FacebookIcon";
 
@@ -57,9 +60,12 @@ export default function Services() {
           {SERVICES.map((service) => {
             const Icon = ICONS[service.id] ?? DoorClosed;
             return (
-              <div
+              <button
                 key={service.id}
-                className="flex flex-col items-center gap-3 rounded-xl border border-border-soft bg-surface p-4 text-center transition-colors hover:border-gold/60"
+                type="button"
+                onClick={() => selectServiceInquiry(service.name)}
+                className="flex min-h-[120px] w-full flex-col items-center gap-3 rounded-xl border border-border-soft bg-surface p-4 text-center transition-colors hover:border-gold/60 hover:bg-surface-2 focus-visible:border-gold active:scale-[0.98]"
+                aria-label={`Request a quote for ${service.name}`}
               >
                 <span className="flex h-11 w-11 items-center justify-center rounded-full bg-surface-2">
                   <Icon className="h-5 w-5 text-gold-bright" aria-hidden="true" />
@@ -67,7 +73,7 @@ export default function Services() {
                 <span className="text-sm font-medium leading-snug text-foreground">
                   {service.name}
                 </span>
-              </div>
+              </button>
             );
           })}
         </div>

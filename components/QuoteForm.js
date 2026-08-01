@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Upload, X, Loader2, CheckCircle2, AlertTriangle } from "lucide-react";
 import {
   SERVICE_CITIES,
@@ -10,7 +10,13 @@ import {
   BUDGET_RANGES,
   FORM_ENDPOINT,
   BACKUP_EMAIL,
+  MAILTO_HREF,
 } from "@/lib/site-config";
+import {
+  SERVICE_INQUIRY_EVENT,
+  SERVICE_INQUIRY_STORAGE_KEY,
+  inquiryDescription,
+} from "@/lib/service-inquiry";
 
 const MAX_FILES = 6;
 const MAX_FILE_SIZE_MB = 8;
@@ -40,6 +46,38 @@ export default function QuoteForm() {
   const [status, setStatus] = useState("idle"); // idle | submitting | success | error
   const fileInputRef = useRef(null);
   const formId = useId();
+
+  // Prefill from service-card clicks (smooth-scrolled to this form)
+  useEffect(() => {
+    function applyServiceInquiry(serviceName) {
+      if (!serviceName) return;
+      const known = SERVICES.some((s) => s.name === serviceName);
+      if (!known) return;
+
+      setStatus("idle");
+      setErrors({});
+      setFields((prev) => ({
+        ...prev,
+        projectType: serviceName,
+        description: inquiryDescription(serviceName),
+      }));
+    }
+
+    function onInquiry(event) {
+      applyServiceInquiry(event.detail?.serviceName);
+    }
+
+    window.addEventListener(SERVICE_INQUIRY_EVENT, onInquiry);
+
+    try {
+      const stored = window.sessionStorage.getItem(SERVICE_INQUIRY_STORAGE_KEY);
+      if (stored) applyServiceInquiry(stored);
+    } catch {
+      // ignore
+    }
+
+    return () => window.removeEventListener(SERVICE_INQUIRY_EVENT, onInquiry);
+  }, []);
 
   function updateField(name, value) {
     setFields((prev) => ({ ...prev, [name]: value }));
@@ -184,7 +222,7 @@ export default function QuoteForm() {
           <p>
             Sorry, we couldn&apos;t send your request right now. Please email your project
             description and photos directly to{" "}
-            <a href={`mailto:${BACKUP_EMAIL}`} className="font-semibold underline">
+            <a href={MAILTO_HREF} className="font-semibold underline">
               {BACKUP_EMAIL}
             </a>
             .

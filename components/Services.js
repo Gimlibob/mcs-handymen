@@ -12,6 +12,7 @@ import {
   BellRing,
   Droplets,
   Camera,
+  Thermometer,
 } from "lucide-react";
 import { SERVICES, FACEBOOK_URL } from "@/lib/site-config";
 import { PrimaryLink, SecondaryLink } from "./Buttons";
@@ -31,6 +32,7 @@ const ICONS = {
   "smoke-detectors": BellRing,
   "caulking-sealing": Droplets,
   "hollow-core-door": DoorClosed,
+  weatherstripping: Thermometer,
 };
 
 export default function Services() {

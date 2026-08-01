@@ -26,6 +26,7 @@ const initialFields = {
   fullName: "",
   email: "",
   city: "",
+  cityOther: "",
   propertyType: "",
   projectType: "",
   description: "",
@@ -130,6 +131,9 @@ export default function QuoteForm() {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fields.email))
       next.email = "Please enter a valid email address.";
     if (!fields.city) next.city = "Please select your city.";
+    else if (fields.city === "Other" && fields.cityOther.trim().length < 2) {
+      next.cityOther = "Please enter your city name.";
+    }
     if (!fields.propertyType) next.propertyType = "Please select a property type.";
     if (!fields.projectType) next.projectType = "Please select a project type.";
     if (fields.description.trim().length < 10)
@@ -160,7 +164,10 @@ export default function QuoteForm() {
       const payload = new FormData();
       payload.append("fullName", fields.fullName);
       payload.append("email", fields.email);
-      payload.append("city", fields.city);
+      const cityValue =
+        fields.city === "Other" ? fields.cityOther.trim() : fields.city;
+      payload.append("city", cityValue);
+      if (fields.city === "Other") payload.append("citySelection", "Other");
       payload.append("propertyType", fields.propertyType);
       payload.append("projectType", fields.projectType);
       payload.append("description", fields.description);
@@ -265,7 +272,11 @@ export default function QuoteForm() {
           id={`${formId}-city`}
           name="city"
           value={fields.city}
-          onChange={(e) => updateField("city", e.target.value)}
+          onChange={(e) => {
+            const value = e.target.value;
+            updateField("city", value);
+            if (value !== "Other") updateField("cityOther", "");
+          }}
           aria-invalid={!!errors.city}
           aria-describedby={errors.city ? `${formId}-city-error` : undefined}
           className={inputClass(errors.city)}
@@ -278,6 +289,28 @@ export default function QuoteForm() {
           ))}
         </select>
       </Field>
+
+      {fields.city === "Other" && (
+        <Field
+          id={`${formId}-cityOther`}
+          label="Your City"
+          required
+          error={errors.cityOther}
+        >
+          <input
+            id={`${formId}-cityOther`}
+            name="cityOther"
+            type="text"
+            autoComplete="address-level2"
+            value={fields.cityOther}
+            onChange={(e) => updateField("cityOther", e.target.value)}
+            aria-invalid={!!errors.cityOther}
+            aria-describedby={errors.cityOther ? `${formId}-cityOther-error` : undefined}
+            className={inputClass(errors.cityOther)}
+            placeholder="Enter your city name"
+          />
+        </Field>
+      )}
 
       <Field
         id={`${formId}-propertyType`}

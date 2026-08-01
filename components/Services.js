@@ -13,6 +13,8 @@ import {
   Droplets,
   Camera,
   Thermometer,
+  Blinds,
+  SquareStack,
 } from "lucide-react";
 import { SERVICES, FACEBOOK_URL } from "@/lib/site-config";
 import { PrimaryLink, SecondaryLink } from "./Buttons";
@@ -33,6 +35,8 @@ const ICONS = {
   "caulking-sealing": Droplets,
   "hollow-core-door": DoorClosed,
   weatherstripping: Thermometer,
+  "blind-curtain-rods": Blinds,
+  "cabinet-hardware": SquareStack,
 };
 
 export default function Services() {

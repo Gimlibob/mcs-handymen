@@ -22,12 +22,16 @@ const FIT_PADDING = 20;
 const GOOGLE_MAPS_URL = `https://www.google.com/maps/@${MAP_CENTER.lat},${MAP_CENTER.lng},12z`;
 
 function loadGoogleMaps(apiKey) {
-  if (typeof window === "undefined") return Promise.reject();
+  if (typeof window === "undefined") return Promise.reject(new Error("No window"));
   if (window.google?.maps) return Promise.resolve(window.google.maps);
 
   const existing = document.querySelector("script[data-mcs-google-maps]");
   if (existing) {
     return new Promise((resolve, reject) => {
+      if (window.google?.maps) {
+        resolve(window.google.maps);
+        return;
+      }
       existing.addEventListener("load", () => resolve(window.google.maps));
       existing.addEventListener("error", reject);
     });
@@ -62,7 +66,6 @@ function initGoogleMap(container, maps) {
     zoom: 11,
     disableDefaultUI: true,
     zoomControl: true,
-    // Pan/zoom freely on the map; page still scrolls when touch starts outside it
     gestureHandling: "greedy",
     draggable: true,
     scrollwheel: true,
@@ -87,8 +90,19 @@ function initGoogleMap(container, maps) {
   return map;
 }
 
+function resetMapContainer(container) {
+  // Leaflet leaves an internal id on the DOM node; clear it for React Strict Mode remounts
+  if (container._leaflet_id) {
+    container._leaflet_id = undefined;
+  }
+  container.innerHTML = "";
+}
+
 async function initLeafletMap(container) {
-  const L = (await import("leaflet")).default;
+  const leafletModule = await import("leaflet");
+  const L = leafletModule.default ?? leafletModule;
+
+  resetMapContainer(container);
 
   const map = L.map(container, {
     center: [MAP_CENTER.lat, MAP_CENTER.lng],
@@ -103,12 +117,27 @@ async function initLeafletMap(container) {
     attributionControl: true,
   });
 
-  L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
-    attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
-    subdomains: "abcd",
-    maxZoom: 19,
-  }).addTo(map);
+  // Prefer Carto light tiles; fall back to OSM if CDN is blocked
+  const carto = L.tileLayer(
+    "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+    {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
+      subdomains: "abcd",
+      maxZoom: 19,
+    }
+  );
+
+  carto.on("tileerror", () => {
+    if (map.__mcsOsmFallback) return;
+    map.__mcsOsmFallback = true;
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 19,
+    }).addTo(map);
+  });
+
+  carto.addTo(map);
 
   const polygon = L.polygon(SERVICE_POLYGON, {
     color: GOLD_STROKE,
@@ -119,17 +148,37 @@ async function initLeafletMap(container) {
   }).addTo(map);
 
   function fitPolygon() {
-    map.invalidateSize();
-    map.fitBounds(polygon.getBounds(), { padding: [FIT_PADDING, FIT_PADDING] });
+    try {
+      map.invalidateSize();
+      map.fitBounds(polygon.getBounds(), { padding: [FIT_PADDING, FIT_PADDING] });
+    } catch {
+      // ignore transient layout races during remount
+    }
   }
 
   fitPolygon();
-  setTimeout(fitPolygon, 50);
-  setTimeout(fitPolygon, 250);
+  requestAnimationFrame(fitPolygon);
+  setTimeout(fitPolygon, 100);
+  setTimeout(fitPolygon, 300);
   map.whenReady(fitPolygon);
 
   map.__mcsFit = fitPolygon;
   return map;
+}
+
+function destroyMap(map, container) {
+  if (!map) {
+    if (container) resetMapContainer(container);
+    return;
+  }
+  try {
+    if (typeof map.remove === "function") {
+      map.remove();
+    }
+  } catch {
+    // ignore
+  }
+  if (container) resetMapContainer(container);
 }
 
 export default function ServiceAreaMap() {
@@ -138,9 +187,13 @@ export default function ServiceAreaMap() {
   const [shouldLoad, setShouldLoad] = useState(false);
   const [engine, setEngine] = useState("loading"); // loading | google | leaflet | error
 
+  // Load when visible; also force-load shortly after mount so localhost always gets a map
   useEffect(() => {
     const el = containerRef.current;
-    if (!el) return undefined;
+    if (!el) {
+      setShouldLoad(true);
+      return undefined;
+    }
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -149,11 +202,20 @@ export default function ServiceAreaMap() {
           observer.disconnect();
         }
       },
-      { rootMargin: "200px" }
+      { rootMargin: "240px", threshold: 0.01 }
     );
 
     observer.observe(el);
-    return () => observer.disconnect();
+
+    const fallback = window.setTimeout(() => {
+      setShouldLoad(true);
+      observer.disconnect();
+    }, 800);
+
+    return () => {
+      observer.disconnect();
+      window.clearTimeout(fallback);
+    };
   }, []);
 
   useEffect(() => {
@@ -163,17 +225,11 @@ export default function ServiceAreaMap() {
     const node = containerRef.current;
 
     async function setup() {
-      if (mapInstanceRef.current) {
-        try {
-          if (mapInstanceRef.current.remove) mapInstanceRef.current.remove();
-          else node.innerHTML = "";
-        } catch {
-          node.innerHTML = "";
-        }
-        mapInstanceRef.current = null;
-      }
+      setEngine("loading");
+      destroyMap(mapInstanceRef.current, node);
+      mapInstanceRef.current = null;
 
-      const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+      const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY?.trim();
 
       try {
         if (apiKey) {
@@ -181,19 +237,31 @@ export default function ServiceAreaMap() {
           if (cancelled) return;
           mapInstanceRef.current = initGoogleMap(node, maps);
           setEngine("google");
-        } else {
-          mapInstanceRef.current = await initLeafletMap(node);
-          if (cancelled) return;
-          setEngine("leaflet");
+          return;
         }
-      } catch {
+
+        mapInstanceRef.current = await initLeafletMap(node);
+        if (cancelled) {
+          destroyMap(mapInstanceRef.current, node);
+          mapInstanceRef.current = null;
+          return;
+        }
+        setEngine("leaflet");
+      } catch (err) {
+        console.error("[ServiceAreaMap] primary init failed:", err);
         if (cancelled) return;
         try {
-          node.innerHTML = "";
+          destroyMap(mapInstanceRef.current, node);
           mapInstanceRef.current = await initLeafletMap(node);
+          if (cancelled) {
+            destroyMap(mapInstanceRef.current, node);
+            mapInstanceRef.current = null;
+            return;
+          }
           setEngine("leaflet");
-        } catch {
-          setEngine("error");
+        } catch (fallbackErr) {
+          console.error("[ServiceAreaMap] leaflet fallback failed:", fallbackErr);
+          if (!cancelled) setEngine("error");
         }
       }
     }
@@ -209,9 +277,7 @@ export default function ServiceAreaMap() {
     return () => {
       cancelled = true;
       window.removeEventListener("resize", onResize);
-      if (mapInstanceRef.current?.remove) {
-        mapInstanceRef.current.remove();
-      }
+      destroyMap(mapInstanceRef.current, node);
       mapInstanceRef.current = null;
     };
   }, [shouldLoad]);
@@ -241,8 +307,16 @@ export default function ServiceAreaMap() {
           )}
 
           {engine === "error" && (
-            <div className="absolute inset-0 flex items-center justify-center bg-surface px-4 text-center text-sm text-muted">
-              Map unavailable. Use the link below to open the area in Google Maps.
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-surface px-4 text-center text-sm text-muted">
+              <p>Map unavailable right now.</p>
+              <a
+                href={GOOGLE_MAPS_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-gold-bright underline underline-offset-2"
+              >
+                Open in Google Maps
+              </a>
             </div>
           )}
         </div>

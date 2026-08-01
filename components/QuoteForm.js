@@ -7,7 +7,6 @@ import {
   PROPERTY_TYPES,
   SERVICES,
   CONTACT_METHODS,
-  BUDGET_RANGES,
   FORM_ENDPOINT,
   BACKUP_EMAIL,
   MAILTO_HREF,
@@ -32,7 +31,6 @@ const initialFields = {
   description: "",
   contactMethod: "",
   preferredDate: "",
-  budgetRange: "",
 };
 
 function formatBytes(bytes) {
@@ -168,7 +166,6 @@ export default function QuoteForm() {
       payload.append("description", fields.description);
       payload.append("contactMethod", fields.contactMethod);
       if (fields.preferredDate) payload.append("preferredDate", fields.preferredDate);
-      if (fields.budgetRange) payload.append("budgetRange", fields.budgetRange);
       files.forEach((file) => payload.append("photos", file, file.name));
 
       const response = await fetch(FORM_ENDPOINT, {
@@ -432,23 +429,6 @@ export default function QuoteForm() {
           onChange={(e) => updateField("preferredDate", e.target.value)}
           className={inputClass()}
         />
-      </Field>
-
-      <Field id={`${formId}-budgetRange`} label="Budget Range" optional>
-        <select
-          id={`${formId}-budgetRange`}
-          name="budgetRange"
-          value={fields.budgetRange}
-          onChange={(e) => updateField("budgetRange", e.target.value)}
-          className={inputClass()}
-        >
-          <option value="">Select a range&hellip;</option>
-          {BUDGET_RANGES.map((range) => (
-            <option key={range} value={range}>
-              {range}
-            </option>
-          ))}
-        </select>
       </Field>
 
       <button

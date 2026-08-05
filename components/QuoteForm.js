@@ -29,6 +29,7 @@ const initialFields = {
   cityOther: "",
   propertyType: "",
   projectType: "",
+  projectTypeOther: "",
   description: "",
   contactMethod: "",
   preferredDate: "",
@@ -38,13 +39,28 @@ function formatBytes(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-export default function QuoteForm() {
-  const [fields, setFields] = useState(initialFields);
+export default function QuoteForm({ initialCity = "" }) {
+  const [fields, setFields] = useState(() => ({
+    ...initialFields,
+    city: initialCity && SERVICE_CITIES.includes(initialCity) ? initialCity : "",
+  }));
   const [files, setFiles] = useState([]);
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState("idle"); // idle | submitting | success | error
   const fileInputRef = useRef(null);
   const formId = useId();
+
+  // Prefill city from local landing pages (e.g. /manvel-tx → Manvel)
+  useEffect(() => {
+    if (!initialCity || !SERVICE_CITIES.includes(initialCity) || initialCity === "Other") {
+      return;
+    }
+    setFields((prev) => ({
+      ...prev,
+      city: initialCity,
+      cityOther: "",
+    }));
+  }, [initialCity]);
 
   // Prefill from service-card clicks (smooth-scrolled to this form)
   useEffect(() => {
@@ -58,6 +74,7 @@ export default function QuoteForm() {
       setFields((prev) => ({
         ...prev,
         projectType: serviceName,
+        projectTypeOther: "",
         description: inquiryDescription(serviceName),
       }));
     }
@@ -136,6 +153,9 @@ export default function QuoteForm() {
     }
     if (!fields.propertyType) next.propertyType = "Please select a property type.";
     if (!fields.projectType) next.projectType = "Please select a project type.";
+    else if (fields.projectType === "Other" && fields.projectTypeOther.trim().length < 2) {
+      next.projectTypeOther = "Please enter your custom service or task.";
+    }
     if (fields.description.trim().length < 10)
       next.description = "Please describe the project (at least 10 characters).";
     if (files.length === 0) next.photos = "Please upload at least one photo.";
@@ -169,7 +189,14 @@ export default function QuoteForm() {
       payload.append("city", cityValue);
       if (fields.city === "Other") payload.append("citySelection", "Other");
       payload.append("propertyType", fields.propertyType);
-      payload.append("projectType", fields.projectType);
+      const projectTypeValue =
+        fields.projectType === "Other"
+          ? fields.projectTypeOther.trim()
+          : fields.projectType;
+      payload.append("projectType", projectTypeValue);
+      if (fields.projectType === "Other") {
+        payload.append("projectTypeSelection", "Other");
+      }
       payload.append("description", fields.description);
       payload.append("contactMethod", fields.contactMethod);
       if (fields.preferredDate) payload.append("preferredDate", fields.preferredDate);
@@ -184,7 +211,13 @@ export default function QuoteForm() {
       if (!response.ok) throw new Error("Submission failed");
 
       setStatus("success");
-      setFields(initialFields);
+      setFields({
+        ...initialFields,
+        city:
+          initialCity && SERVICE_CITIES.includes(initialCity) && initialCity !== "Other"
+            ? initialCity
+            : "",
+      });
       setFiles([]);
       setErrors({});
     } catch {
@@ -341,7 +374,11 @@ export default function QuoteForm() {
           id={`${formId}-projectType`}
           name="projectType"
           value={fields.projectType}
-          onChange={(e) => updateField("projectType", e.target.value)}
+          onChange={(e) => {
+            const value = e.target.value;
+            updateField("projectType", value);
+            if (value !== "Other") updateField("projectTypeOther", "");
+          }}
           aria-invalid={!!errors.projectType}
           aria-describedby={errors.projectType ? `${formId}-projectType-error` : undefined}
           className={inputClass(errors.projectType)}
@@ -355,6 +392,29 @@ export default function QuoteForm() {
           <option value="Other">Other</option>
         </select>
       </Field>
+
+      {fields.projectType === "Other" && (
+        <Field
+          id={`${formId}-projectTypeOther`}
+          label="Custom Service / Task"
+          required
+          error={errors.projectTypeOther}
+        >
+          <input
+            id={`${formId}-projectTypeOther`}
+            name="projectTypeOther"
+            type="text"
+            value={fields.projectTypeOther}
+            onChange={(e) => updateField("projectTypeOther", e.target.value)}
+            aria-invalid={!!errors.projectTypeOther}
+            aria-describedby={
+              errors.projectTypeOther ? `${formId}-projectTypeOther-error` : undefined
+            }
+            className={inputClass(errors.projectTypeOther)}
+            placeholder="e.g., Custom Service / Task"
+          />
+        </Field>
+      )}
 
       <Field
         id={`${formId}-description`}

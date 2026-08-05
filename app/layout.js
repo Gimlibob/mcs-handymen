@@ -1,6 +1,8 @@
 import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
 import { SITE_URL } from "@/lib/site-config";
+import { buildLocalBusinessJsonLd } from "@/lib/service-areas";
+import LocalBusinessJsonLd from "@/components/LocalBusinessJsonLd";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -56,9 +58,12 @@ export const viewport = {
 };
 
 export default function RootLayout({ children }) {
+  const localBusinessJsonLd = buildLocalBusinessJsonLd();
+
   return (
     <html lang="en-US" className={`${inter.variable} ${poppins.variable} h-full`}>
       <body className="min-h-full flex flex-col bg-background text-foreground antialiased">
+        <LocalBusinessJsonLd data={localBusinessJsonLd} />
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-gold focus:px-4 focus:py-2 focus:text-black focus:font-semibold"

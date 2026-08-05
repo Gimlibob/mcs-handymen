@@ -1,6 +1,6 @@
 import QuoteForm from "./QuoteForm";
 
-export default function QuoteSection() {
+export default function QuoteSection({ initialCity = "" }) {
   return (
     <section id="quote" className="border-t border-border-soft bg-surface/40 px-4 py-16 sm:px-6">
       <div className="mx-auto max-w-xl">
@@ -12,7 +12,7 @@ export default function QuoteSection() {
           quote.
         </p>
         <div className="mt-8">
-          <QuoteForm />
+          <QuoteForm initialCity={initialCity} />
         </div>
       </div>
     </section>

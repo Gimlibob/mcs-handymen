@@ -1,7 +1,9 @@
+import Link from "next/link";
 import { Mail } from "lucide-react";
 import FacebookIcon from "./icons/FacebookIcon";
 import Logo from "./Logo";
-import { SERVICE_AREA, FACEBOOK_URL, BACKUP_EMAIL, MAILTO_HREF } from "@/lib/site-config";
+import { FACEBOOK_URL, BACKUP_EMAIL, MAILTO_HREF } from "@/lib/site-config";
+import { SERVICE_AREA_PAGES } from "@/lib/service-areas";
 
 export default function Footer() {
   return (
@@ -9,7 +11,23 @@ export default function Footer() {
       <div className="mx-auto flex max-w-5xl flex-col items-center gap-6 text-center">
         <Logo />
 
-        <p className="text-sm text-muted">Serving {SERVICE_AREA}</p>
+        <nav aria-label="Service areas" className="flex flex-col items-center gap-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gold-bright">
+            Service Areas
+          </p>
+          <ul className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+            {SERVICE_AREA_PAGES.map((area) => (
+              <li key={area.slug}>
+                <Link
+                  href={`/${area.slug}`}
+                  className="text-sm font-medium text-muted transition-colors hover:text-gold-bright"
+                >
+                  {area.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
 
         <div className="flex flex-col items-center gap-3 sm:flex-row sm:gap-6">
           <a

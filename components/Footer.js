@@ -2,7 +2,12 @@ import Link from "next/link";
 import { Mail } from "lucide-react";
 import FacebookIcon from "./icons/FacebookIcon";
 import Logo from "./Logo";
-import { FACEBOOK_URL, BACKUP_EMAIL, MAILTO_HREF } from "@/lib/site-config";
+import {
+  FACEBOOK_URL,
+  BACKUP_EMAIL,
+  MAILTO_HREF,
+  LEGAL_ENTITY_FULL,
+} from "@/lib/site-config";
 import { SERVICE_AREA_PAGES } from "@/lib/service-areas";
 
 export default function Footer() {
@@ -49,8 +54,26 @@ export default function Footer() {
         </div>
 
         <p className="text-xs text-muted/70">
-          &copy; 2026 MCS Handymen. All rights reserved.
+          &copy; 2026 {LEGAL_ENTITY_FULL}. All rights reserved.
         </p>
+
+        <nav aria-label="Legal" className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs">
+          <Link
+            href="/terms"
+            className="font-medium text-muted transition-colors hover:text-gold-bright"
+          >
+            Terms &amp; Conditions
+          </Link>
+          <span className="text-muted/50" aria-hidden="true">
+            |
+          </span>
+          <Link
+            href="/privacy"
+            className="font-medium text-muted transition-colors hover:text-gold-bright"
+          >
+            Privacy Policy
+          </Link>
+        </nav>
       </div>
     </footer>
   );

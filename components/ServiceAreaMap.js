@@ -21,32 +21,43 @@ const FIT_PADDING = 20;
 
 const GOOGLE_MAPS_URL = `https://www.google.com/maps/@${MAP_CENTER.lat},${MAP_CENTER.lng},12z`;
 
-function loadGoogleMaps(apiKey) {
+function loadGoogleMaps(apiKey, timeoutMs = 10000) {
   if (typeof window === "undefined") return Promise.reject(new Error("No window"));
   if (window.google?.maps) return Promise.resolve(window.google.maps);
 
-  const existing = document.querySelector("script[data-mcs-google-maps]");
-  if (existing) {
-    return new Promise((resolve, reject) => {
+  const loadPromise = new Promise((resolve, reject) => {
+    const existing = document.querySelector("script[data-mcs-google-maps]");
+    if (existing) {
       if (window.google?.maps) {
         resolve(window.google.maps);
         return;
       }
-      existing.addEventListener("load", () => resolve(window.google.maps));
-      existing.addEventListener("error", reject);
-    });
-  }
+      existing.addEventListener("load", () => {
+        if (window.google?.maps) resolve(window.google.maps);
+        else reject(new Error("Google Maps failed to initialize"));
+      });
+      existing.addEventListener("error", () => reject(new Error("Google Maps script error")));
+      return;
+    }
 
-  return new Promise((resolve, reject) => {
     const script = document.createElement("script");
     script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}`;
     script.async = true;
     script.defer = true;
     script.dataset.mcsGoogleMaps = "true";
-    script.onload = () => resolve(window.google.maps);
-    script.onerror = reject;
+    script.onload = () => {
+      if (window.google?.maps) resolve(window.google.maps);
+      else reject(new Error("Google Maps failed to initialize"));
+    };
+    script.onerror = () => reject(new Error("Google Maps script error"));
     document.head.appendChild(script);
   });
+
+  const timeoutPromise = new Promise((_, reject) => {
+    window.setTimeout(() => reject(new Error("Google Maps load timeout")), timeoutMs);
+  });
+
+  return Promise.race([loadPromise, timeoutPromise]);
 }
 
 function fitGooglePolygon(map, maps) {
@@ -184,39 +195,8 @@ function destroyMap(map, container) {
 export default function ServiceAreaMap() {
   const containerRef = useRef(null);
   const mapInstanceRef = useRef(null);
-  const [shouldLoad, setShouldLoad] = useState(false);
+  const [shouldLoad] = useState(true);
   const [engine, setEngine] = useState("loading"); // loading | google | leaflet | error
-
-  // Load when visible; also force-load shortly after mount so localhost always gets a map
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) {
-      setShouldLoad(true);
-      return undefined;
-    }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setShouldLoad(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "240px", threshold: 0.01 }
-    );
-
-    observer.observe(el);
-
-    const fallback = window.setTimeout(() => {
-      setShouldLoad(true);
-      observer.disconnect();
-    }, 800);
-
-    return () => {
-      observer.disconnect();
-      window.clearTimeout(fallback);
-    };
-  }, []);
 
   useEffect(() => {
     if (!shouldLoad || !containerRef.current) return undefined;
@@ -233,11 +213,15 @@ export default function ServiceAreaMap() {
 
       try {
         if (apiKey) {
-          const maps = await loadGoogleMaps(apiKey);
-          if (cancelled) return;
-          mapInstanceRef.current = initGoogleMap(node, maps);
-          setEngine("google");
-          return;
+          try {
+            const maps = await loadGoogleMaps(apiKey);
+            if (cancelled) return;
+            mapInstanceRef.current = initGoogleMap(node, maps);
+            setEngine("google");
+            return;
+          } catch (googleErr) {
+            console.warn("[ServiceAreaMap] Google Maps unavailable, using Leaflet:", googleErr);
+          }
         }
 
         mapInstanceRef.current = await initLeafletMap(node);
@@ -248,21 +232,8 @@ export default function ServiceAreaMap() {
         }
         setEngine("leaflet");
       } catch (err) {
-        console.error("[ServiceAreaMap] primary init failed:", err);
-        if (cancelled) return;
-        try {
-          destroyMap(mapInstanceRef.current, node);
-          mapInstanceRef.current = await initLeafletMap(node);
-          if (cancelled) {
-            destroyMap(mapInstanceRef.current, node);
-            mapInstanceRef.current = null;
-            return;
-          }
-          setEngine("leaflet");
-        } catch (fallbackErr) {
-          console.error("[ServiceAreaMap] leaflet fallback failed:", fallbackErr);
-          if (!cancelled) setEngine("error");
-        }
+        console.error("[ServiceAreaMap] map init failed:", err);
+        if (!cancelled) setEngine("error");
       }
     }
 

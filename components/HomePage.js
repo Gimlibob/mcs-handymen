@@ -5,6 +5,7 @@ import HowItWorks from "@/components/HowItWorks";
 import Gallery from "@/components/Gallery";
 import QuoteSection from "@/components/QuoteSection";
 import FacebookSection from "@/components/FacebookSection";
+import About from "@/components/About";
 import Footer from "@/components/Footer";
 
 /**
@@ -21,6 +22,7 @@ export default function HomePage({ area = null }) {
         <Gallery />
         <QuoteSection initialCity={area?.city ?? ""} />
         <FacebookSection />
+        <About />
       </main>
       <Footer />
     </>

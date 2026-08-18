@@ -14,7 +14,7 @@ export default function Gallery() {
     <section className="border-t border-border-soft px-4 py-14 sm:px-6" aria-labelledby="gallery-heading">
       <div className="mx-auto max-w-4xl text-center">
         <h2 id="gallery-heading" className="font-heading text-2xl font-bold text-foreground sm:text-3xl">
-          Before &amp; After Gallery
+          Gallery
         </h2>
         <div className="mt-6 flex flex-col items-center gap-3 rounded-xl border border-dashed border-border-soft bg-surface/40 px-6 py-10">
           <ImageIcon className="h-8 w-8 text-muted" aria-hidden="true" />

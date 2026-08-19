@@ -73,6 +73,15 @@ export default function Footer() {
           >
             Privacy Policy
           </Link>
+          <span className="text-muted/50" aria-hidden="true">
+            |
+          </span>
+          <Link
+            href="/estimate-terms"
+            className="font-medium text-muted/80 transition-colors hover:text-gold-bright"
+          >
+            Estimate Terms
+          </Link>
         </nav>
       </div>
     </footer>

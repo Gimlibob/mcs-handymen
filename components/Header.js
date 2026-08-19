@@ -10,8 +10,8 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-border-soft bg-background/95 backdrop-blur">
-      <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
-        <a href="#home" className="shrink-0" aria-label="MCS Handymen home">
+      <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+        <a href="#home" className="min-w-0 flex-1 md:flex-none" aria-label="MCS Handymen home">
           <Logo />
         </a>
 
@@ -56,7 +56,7 @@ export default function Header() {
         {/* Mobile menu toggle */}
         <button
           type="button"
-          className="flex h-11 w-11 items-center justify-center rounded-lg border border-border-soft text-gold-bright md:hidden"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-border-soft text-gold-bright md:hidden"
           aria-label={open ? "Close menu" : "Open menu"}
           aria-expanded={open}
           aria-controls="mobile-nav"

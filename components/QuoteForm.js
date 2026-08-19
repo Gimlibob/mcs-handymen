@@ -490,7 +490,7 @@ export default function QuoteForm({ initialCity = "" }) {
         <legend className="mb-2 text-sm font-medium text-foreground">
           Preferred Contact Method <span className="text-gold-bright">*</span>
         </legend>
-        <div className="flex gap-4">
+        <div className="flex flex-wrap gap-3">
           {CONTACT_METHODS.map((method) => (
             <label
               key={method}

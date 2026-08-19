@@ -3,6 +3,7 @@ import "./globals.css";
 import { SITE_URL } from "@/lib/site-config";
 import { buildLocalBusinessJsonLd } from "@/lib/service-areas";
 import LocalBusinessJsonLd from "@/components/LocalBusinessJsonLd";
+import BackToTop from "@/components/BackToTop";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -72,6 +73,7 @@ export default function RootLayout({ children }) {
           Skip to main content
         </a>
         {children}
+        <BackToTop />
       </body>
     </html>
   );

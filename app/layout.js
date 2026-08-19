@@ -19,13 +19,14 @@ const poppins = Poppins({
 
 export const metadata = {
   metadataBase: new URL(SITE_URL),
-  title: "MCS Handymen | Small Repairs & Property Maintenance in Manvel, Iowa Colony & Rosharon, TX",
+  title: "MCS Handymen | Small Repairs & Property Maintenance in Manvel, Iowa Colony, Rosharon & Alvin, TX",
   description:
-    "Small repairs and property maintenance for homes, rentals, and small businesses in Manvel, Iowa Colony, and Rosharon, TX. Send project photos for a quote.",
+    "Small repairs and property maintenance for homes, rentals, and small businesses in Manvel, Iowa Colony, Rosharon, and Alvin, TX. Send project photos for a quote.",
   keywords: [
     "handyman Manvel TX",
     "handyman Iowa Colony TX",
     "handyman Rosharon TX",
+    "handyman Alvin TX",
     "MCS Handymen",
     "property maintenance",
     "small repairs",
@@ -33,7 +34,7 @@ export const metadata = {
   openGraph: {
     title: "MCS Handymen | Small Repairs & Property Maintenance",
     description:
-      "Small repairs and property maintenance for homes, rentals & small businesses. Serving Manvel, Iowa Colony & Rosharon, TX.",
+      "Small repairs and property maintenance for homes, rentals & small businesses. Serving Manvel, Iowa Colony, Rosharon & Alvin, TX.",
     url: SITE_URL,
     siteName: "MCS Handymen",
     locale: "en_US",
@@ -43,7 +44,7 @@ export const metadata = {
     card: "summary_large_image",
     title: "MCS Handymen | Small Repairs & Property Maintenance",
     description:
-      "Small repairs and property maintenance for homes, rentals & small businesses. Serving Manvel, Iowa Colony & Rosharon, TX.",
+      "Small repairs and property maintenance for homes, rentals & small businesses. Serving Manvel, Iowa Colony, Rosharon & Alvin, TX.",
   },
   robots: {
     index: true,

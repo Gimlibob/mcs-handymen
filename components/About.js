@@ -16,7 +16,7 @@ export default function About() {
           MCS Handymen provides practical help for homeowners, landlords, property managers, and
           small businesses needing small repairs and property maintenance. We focus on clear
           communication, respect for your property, and straightforward service in Manvel, Iowa
-          Colony, Rosharon, and nearby areas.
+          Colony, Rosharon, Alvin, and nearby areas.
         </p>
       </div>
     </section>

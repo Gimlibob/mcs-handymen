@@ -2,18 +2,20 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ExternalLink } from "lucide-react";
+import { SERVICE_AREA } from "@/lib/site-config";
 import "leaflet/dist/leaflet.css";
 
-/** Exact golden polygon vertices [lat, lng] — NW → NE → SE → SW */
+/** Exact golden polygon vertices [lat, lng] */
 export const SERVICE_POLYGON = [
-  [29.5042, -95.4373],
-  [29.528417, -95.348833],
-  [29.3901, -95.3621],
-  [29.3912, -95.4601],
+  [29.504596, -95.22707],
+  [29.390749, -95.215308],
+  [29.396914, -95.460597],
+  [29.504194, -95.437306],
+  [29.528872, -95.348788],
 ];
 
 /** Operational base (fallback center only — never shown as a pin/address) */
-export const MAP_CENTER = { lat: 29.4243, lng: -95.3709 };
+export const MAP_CENTER = { lat: 29.4651, lng: -95.3378 };
 
 const GOLD_STROKE = "#d4af37";
 const GOLD_FILL_OPACITY = 0.2;
@@ -260,6 +262,7 @@ export default function ServiceAreaMap() {
           Our Service Area
         </h2>
         <p className="mt-2 text-base text-muted">We come to you.</p>
+        <p className="mt-1 text-sm text-muted/90">{SERVICE_AREA}</p>
       </div>
 
       <div className="mt-5 w-full">

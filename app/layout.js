@@ -4,6 +4,7 @@ import { SITE_URL } from "@/lib/site-config";
 import { buildLocalBusinessJsonLd } from "@/lib/service-areas";
 import LocalBusinessJsonLd from "@/components/LocalBusinessJsonLd";
 import BackToTop from "@/components/BackToTop";
+import { Analytics } from "@vercel/analytics/next";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -74,6 +75,7 @@ export default function RootLayout({ children }) {
         </a>
         {children}
         <BackToTop />
+        <Analytics />
       </body>
     </html>
   );

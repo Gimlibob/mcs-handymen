@@ -1,13 +1,13 @@
 import { ImageIcon } from "lucide-react";
 
 /**
- * Before & After Gallery — hidden until real project photos are added.
+ * Before & After Gallery — not shown on the homepage until real project photos exist.
  *
- * To activate this section once you have your own completed-project photos:
+ * To activate once you have your own completed-project photos:
  *   1. Add photo pairs to /public/images/gallery/.
  *   2. Replace the placeholder block below with an <img> grid of your photos.
- *   3. That's it — no other changes needed, the section is already wired
- *      into the page between "How It Works" and "Request a Quote".
+ *   3. Import and render <Gallery /> again in HomePage.js
+ *      (between HowItWorks and QuoteSection).
  */
 export default function Gallery() {
   return (

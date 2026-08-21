@@ -7,7 +7,6 @@ import {
   PROPERTY_TYPES,
   SERVICES,
   CONTACT_METHODS,
-  FORM_ENDPOINT,
   BACKUP_EMAIL,
   MAILTO_HREF,
 } from "@/lib/site-config";
@@ -16,11 +15,20 @@ import {
   SERVICE_INQUIRY_STORAGE_KEY,
   inquiryDescription,
 } from "@/lib/service-inquiry";
+import {
+  guessImageContentType,
+  isAllowedImageType,
+  MAX_PHOTO_SIZE_MB,
+  MAX_QUOTE_PHOTOS,
+  MAX_TOTAL_PHOTO_SIZE_MB,
+  QUOTE_BLOB_PREFIX,
+  sanitizeUploadFileName,
+} from "@/lib/quote-limits";
+import { upload } from "@vercel/blob/client";
 
-const MAX_FILES = 6;
-const MAX_FILE_SIZE_MB = 8;
-const MAX_TOTAL_SIZE_MB = 20;
-const ACCEPTED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/heic", "image/heif"];
+const MAX_FILES = MAX_QUOTE_PHOTOS;
+const MAX_FILE_SIZE_MB = MAX_PHOTO_SIZE_MB;
+const MAX_TOTAL_SIZE_MB = MAX_TOTAL_PHOTO_SIZE_MB;
 
 const initialFields = {
   fullName: "",
@@ -110,9 +118,7 @@ export default function QuoteForm({ initialCity = "" }) {
       fileErrors.push(`You can upload up to ${MAX_FILES} photos.`);
     }
 
-    const invalidType = combined.find(
-      (f) => f.type && !ACCEPTED_TYPES.includes(f.type) && !/\.heic$/i.test(f.name)
-    );
+    const invalidType = combined.find((f) => !isAllowedImageType(f.type, f.name));
     if (invalidType) {
       fileErrors.push("Only JPG, PNG, and HEIC photos are allowed.");
     }
@@ -165,6 +171,7 @@ export default function QuoteForm({ initialCity = "" }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (status === "submitting") return;
 
     const validationErrors = validate();
     setErrors(validationErrors);
@@ -172,40 +179,53 @@ export default function QuoteForm({ initialCity = "" }) {
       return;
     }
 
-    if (!FORM_ENDPOINT) {
-      // Form backend not configured yet — see README.md.
-      setStatus("error");
-      return;
-    }
-
     setStatus("submitting");
 
     try {
-      const payload = new FormData();
-      payload.append("fullName", fields.fullName);
-      payload.append("email", fields.email);
-      const cityValue =
-        fields.city === "Other" ? fields.cityOther.trim() : fields.city;
-      payload.append("city", cityValue);
-      if (fields.city === "Other") payload.append("citySelection", "Other");
-      payload.append("propertyType", fields.propertyType);
+      const uploadedPhotos = [];
+
+      for (const file of files) {
+        const safeName = sanitizeUploadFileName(file.name);
+        const pathname = `${QUOTE_BLOB_PREFIX}${Date.now()}-${safeName}`;
+        const blob = await upload(pathname, file, {
+          access: "private",
+          handleUploadUrl: "/api/blob/upload",
+          contentType: guessImageContentType(file),
+          multipart: file.size > 4 * 1024 * 1024,
+        });
+
+        uploadedPhotos.push({
+          pathname: blob.pathname,
+          contentType: blob.contentType || guessImageContentType(file),
+          size: file.size,
+        });
+      }
+
+      const cityValue = fields.city === "Other" ? fields.cityOther.trim() : fields.city;
       const projectTypeValue =
         fields.projectType === "Other"
           ? fields.projectTypeOther.trim()
           : fields.projectType;
-      payload.append("projectType", projectTypeValue);
-      if (fields.projectType === "Other") {
-        payload.append("projectTypeSelection", "Other");
-      }
-      payload.append("description", fields.description);
-      payload.append("contactMethod", fields.contactMethod);
-      if (fields.preferredDate) payload.append("preferredDate", fields.preferredDate);
-      files.forEach((file) => payload.append("photos", file, file.name));
 
-      const response = await fetch(FORM_ENDPOINT, {
+      const response = await fetch("/api/quote", {
         method: "POST",
-        headers: { Accept: "application/json" },
-        body: payload,
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fullName: fields.fullName.trim(),
+          email: fields.email.trim(),
+          city: cityValue,
+          citySelection: fields.city === "Other" ? "Other" : fields.city,
+          propertyType: fields.propertyType,
+          projectType: projectTypeValue,
+          projectTypeSelection: fields.projectType === "Other" ? "Other" : fields.projectType,
+          description: fields.description.trim(),
+          contactMethod: fields.contactMethod,
+          preferredDate: fields.preferredDate || "",
+          photos: uploadedPhotos,
+        }),
       });
 
       if (!response.ok) throw new Error("Submission failed");

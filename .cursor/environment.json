@@ -1,0 +1,17 @@
+{
+  "name": "MCS Handymen",
+  "install": "npm ci",
+  "ports": [
+    {
+      "name": "Next.js dev server",
+      "port": 3000
+    }
+  ],
+  "terminals": [
+    {
+      "name": "next-dev",
+      "command": "npm run dev",
+      "description": "Next.js development server (App Router, Turbopack) on http://localhost:3000"
+    }
+  ]
+}

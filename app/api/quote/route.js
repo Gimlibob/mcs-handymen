@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { after } from "next/server";
 import { head } from "@vercel/blob";
 import { Resend } from "resend";
 import {
@@ -18,6 +19,7 @@ import {
   QUOTE_BLOB_PREFIX,
 } from "@/lib/quote-limits";
 import { createPrivatePhotoAccessUrl } from "@/lib/quote-photo-access";
+import { safePersistQuoteLead } from "@/lib/cc/db/persist-quote-lead";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -269,6 +271,12 @@ export async function POST(request) {
       console.error("[quote] Resend send failed");
       return jsonError("Unable to send notification email.", 502);
     }
+
+    // Command Center persistence is best-effort and must never fail the quote.
+    // Runs after the success response so Neon latency/errors cannot block the client.
+    after(async () => {
+      await safePersistQuoteLead(data);
+    });
 
     return NextResponse.json({ ok: true });
   } catch (error) {

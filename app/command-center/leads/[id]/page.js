@@ -2,7 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireOwner } from "@/lib/cc/auth/dal";
 import CommandCenterShell from "@/components/cc/CommandCenterShell";
+import { LeadCustomerBadge } from "@/components/cc/CustomersTable";
 import { AddNoteForm, StatusChangeForm } from "@/components/cc/LeadActions";
+import { getCustomerSummaryForLead } from "@/lib/cc/db/customers";
 import {
   getLeadActivity,
   getLeadById,
@@ -90,10 +92,11 @@ export default async function LeadDetailPage({ params }) {
 
   if (!lead) notFound();
 
-  const [photos, notes, activity] = await Promise.all([
+  const [photos, notes, activity, customerSummary] = await Promise.all([
     getLeadPhotos(lead.id),
     getLeadNotes(lead.id),
     getLeadActivity(lead.id),
+    getCustomerSummaryForLead(lead.customer_id),
   ]);
 
   const allowedNext = getAllowedNextStatuses(lead.status);
@@ -135,6 +138,7 @@ export default async function LeadDetailPage({ params }) {
                   </>
                 ) : null}
               </p>
+              <LeadCustomerBadge summary={customerSummary} />
             </div>
 
             <div className="min-w-[240px] rounded-2xl border border-gold-dim/50 bg-surface px-5 py-4 shadow-[0_8px_24px_rgba(0,0,0,0.2)] xl:max-w-sm xl:flex-1">
@@ -258,15 +262,8 @@ export default async function LeadDetailPage({ params }) {
             </Panel>
 
             {/*
-              Future slot (not implemented in Phase 3): Customer Profile / Customer Intelligence.
-              Architecture keeps this right rail extensible for later objective facts
-              (jobs completed, new vs repeat, first/last job, revenue, estimates accepted/refused,
-              callbacks, recurrence, original source) computed from real data only — plus a
-              separate subjective evaluation layer (communication, price sensitivity, payment,
-              scope behavior, professionalism, overall rating A–D, internal notes) and derived
-              labels (New/Repeat/VIP/At Risk/Do Not Prioritize). Subjective ratings must stay
-              distinct from facts; AI must never unilaterally brand a customer as "bad".
-              Requires future schema + APIs — do not invent data here.
+              Future (not Phase 3.5): jobs, payments, LTV, attribution — do not invent here.
+              Customer Profile / tags / notes live at /command-center/customers/[id].
             */}
           </div>
 

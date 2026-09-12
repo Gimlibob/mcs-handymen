@@ -5,6 +5,7 @@ import { SITE_NAME } from "@/lib/site-config";
 const NAV = [
   { href: "/command-center", label: "Dashboard", exact: true },
   { href: "/command-center/leads", label: "Leads", exact: false },
+  { href: "/command-center/customers", label: "Customers", exact: false },
 ];
 
 function isActive(pathname, item) {

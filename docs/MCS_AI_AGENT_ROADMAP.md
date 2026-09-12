@@ -2,8 +2,8 @@
 
 Architecture documentation for MCS Handymen Command Center AI agents.
 
-**Status:** Validated architecture · documentation only · not implemented.  
-**Do not implement** any agent, migration, or Phase 4A work from this file until an explicit GO.
+**Status:** Validated architecture. Phase 4A Lead Agent is implemented in code · pending live OpenAI validation. Later agents / Marketing Analytics remain documentation only until an explicit GO.  
+**Do not implement** Playbook, Job Prep, Marketing Analytics, or later agents from this file until an explicit GO.
 
 ## Current CRM checkpoints
 
@@ -165,15 +165,50 @@ AI proposes → Human approves → Deterministic server action executes
 
 ---
 
-### 7. Marketing Agent — future
+### 7. Marketing Analytics + Marketing Agent — future (direction approved · not implemented)
 
-**Purpose:** Meta / Facebook / Instagram / Google attribution, analysis, and recommendations.
+**Status:** Approved as product direction only. **Do not implement** until an explicit GO after Phase 4A (and later prerequisites) are validated.
+
+#### Marketing Analytics module (Command Center — future)
+
+Owner-facing analytics surface for paid and organic marketing performance. Historical facts live in Neon; charts and exports read from that store. No invented metrics.
+
+**Intended data / metrics (when connectors exist):**
+
+- Historical ad spend
+- Google Business Profile performance
+- Google Ads (if used)
+- Facebook / Instagram / Meta performance
+- Impressions, reach, views, clicks
+- Leads, cost per lead
+- Jobs won, attributed revenue, ROAS
+- Period charts + comparison vs previous period
+- Historical storage in Neon
+- Export PDF and CSV
+
+**Attribution (future):**
+
+- UTM parameters
+- Source / campaign / ad identifiers
+- `fbclid` / `gclid` (and related click ids when available)
+
+**Architectural notes (when built):**
+
+- Additive Neon tables for marketing facts / snapshots — separate from CRM notes and AI analysis stores
+- Deterministic ingestion and aggregation preferred for numbers; agents may analyze but must not invent spend or ROAS
+- Dashboard “Marketing Snapshot” slot remains empty until real data exists
+
+#### Marketing Agent (future)
+
+**Purpose:** Analyze marketing performance and recommend actions (budget mix, creative/audience hypotheses, follow-up on weak campaigns) grounded in stored analytics + CRM attribution — not raw LLM guesses.
 
 **Limits:**
 
-- No autonomous ad budget changes
+- Drafts and recommendations only until approval gates exist
+- **Never** autonomously change ad budgets or bids
 - No spend without human approval
-- No silent campaign mutations
+- No silent campaign / ad-set / creative mutations
+- No connector writes in early phases
 
 ---
 
@@ -196,13 +231,13 @@ AI proposes → Human approves → Deterministic server action executes
 
 | Stage | Focus | Status |
 | --- | --- | --- |
-| **Phase 4A** | Lead Agent — read-only analysis on Lead Detail | Not started (needs explicit GO) |
+| **Phase 4A** | Lead Agent — read-only analysis on Lead Detail | Implemented · pending live OpenAI validation |
 | **Phase 4A.5** | MCS Playbook / Knowledge System foundations | Future |
 | **Phase 4B** | Job Prep / Technical Agent | Future |
 | **Later** | Estimate / Pricing Agent | Future |
 | **Later** | Follow-up Agent | Future |
 | **Later** | Scheduling / Dispatch Agent | Future |
-| **Later** | Marketing Agent | Future |
+| **Later** | Marketing Analytics module + Marketing Agent | Future (direction approved · not implemented) |
 | **Finally** | MCS Orchestrator | Future |
 
 Within Lead Agent delivery (when approved), prefer small slices already outlined in architecture review:

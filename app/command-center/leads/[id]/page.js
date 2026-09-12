@@ -4,6 +4,8 @@ import { requireOwner } from "@/lib/cc/auth/dal";
 import CommandCenterShell from "@/components/cc/CommandCenterShell";
 import { LeadCustomerBadge } from "@/components/cc/CustomersTable";
 import { AddNoteForm, StatusChangeForm } from "@/components/cc/LeadActions";
+import LeadAgentPanel from "@/components/cc/LeadAgentPanel";
+import { getLatestLeadAnalysis } from "@/lib/cc/db/ai-lead-analyses";
 import { getCustomerSummaryForLead } from "@/lib/cc/db/customers";
 import {
   getLeadActivity,
@@ -92,11 +94,15 @@ export default async function LeadDetailPage({ params }) {
 
   if (!lead) notFound();
 
-  const [photos, notes, activity, customerSummary] = await Promise.all([
+  const [photos, notes, activity, customerSummary, latestAnalysis] = await Promise.all([
     getLeadPhotos(lead.id),
     getLeadNotes(lead.id),
     getLeadActivity(lead.id),
     getCustomerSummaryForLead(lead.customer_id),
+    getLatestLeadAnalysis(lead.id).catch(() => {
+      console.error("[cc/lead] ai analysis load failed");
+      return null;
+    }),
   ]);
 
   const allowedNext = getAllowedNextStatuses(lead.status);
@@ -274,6 +280,12 @@ export default async function LeadDetailPage({ params }) {
                 {lead.description || "No description provided."}
               </p>
             </Panel>
+
+            <LeadAgentPanel
+              leadId={lead.id}
+              crmNextAction={nextAction}
+              latestAnalysis={latestAnalysis}
+            />
 
             <Panel title="Photos">
               <p className="-mt-1 mb-3 text-xs text-muted">

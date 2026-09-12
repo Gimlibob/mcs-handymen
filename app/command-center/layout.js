@@ -13,9 +13,5 @@ export const metadata = {
 };
 
 export default function CommandCenterLayout({ children }) {
-  return (
-    <div className="min-h-full flex-1 bg-background text-foreground">
-      {children}
-    </div>
-  );
+  return children;
 }

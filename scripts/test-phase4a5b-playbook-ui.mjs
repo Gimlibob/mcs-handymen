@@ -48,31 +48,31 @@ async function main() {
   const cookie = mintOwnerCookie();
   const stamp = `${Date.now()}-${randomBytes(2).toString("hex")}`;
 
-  // Guardrails in source — no approve/retire UI actions in this slice
+  // Guardrails: draft UI remains; Approve/Retire live in 4A.5.c forms/actions.
   const formsPath = join(__dirname, "..", "components", "cc", "PlaybookForms.js");
   const formsSrc = readFileSync(formsPath, "utf8");
-  check("ui_has_no_approve_action", !/approvePlaybook|Approve revision/i.test(formsSrc));
-  check("ui_has_no_retire_action", !/retirePlaybook|Retire revision/i.test(formsSrc));
+  check("ui_draft_forms_still_present", /PlaybookDraftEditForm|Save draft/i.test(formsSrc));
+  check("ui_has_approve_for_agents", /Approve for agents/i.test(formsSrc));
+  check("ui_has_retire_from_agents", /Retire from agents/i.test(formsSrc));
 
-  const leadAgentAnalyze = readFileSync(
-    join(__dirname, "..", "lib", "cc", "ai", "lead-agent", "analyze.js"),
-    "utf8"
-  );
   const leadAgentContext = readFileSync(
     join(__dirname, "..", "lib", "cc", "ai", "lead-agent", "context.js"),
     "utf8"
   );
   check(
-    "lead_agent_no_playbook_import",
-    !leadAgentAnalyze.includes("playbook") && !leadAgentContext.includes("playbook")
+    "lead_agent_context_wires_playbook_retrieval",
+    leadAgentContext.includes("retrieveApprovedPlaybookForLead")
   );
 
   const actionsSrc = readFileSync(
     join(__dirname, "..", "lib", "cc", "actions", "playbook.js"),
     "utf8"
   );
-  check("actions_no_approve_export", !/approvePlaybook|retirePlaybook/i.test(actionsSrc));
-
+  check(
+    "actions_export_approve_retire",
+    /approvePlaybookRevisionAction/.test(actionsSrc) &&
+      /retirePlaybookRevisionAction/.test(actionsSrc)
+  );
   const [leadsBefore] = await sql`SELECT COUNT(*)::int AS count FROM leads`;
   const [customersBefore] = await sql`SELECT COUNT(*)::int AS count FROM customers`;
   const [aiBefore] = await sql`SELECT COUNT(*)::int AS count FROM ai_lead_analyses`;
@@ -240,7 +240,6 @@ async function main() {
     check("playbook_list_200", list.status === 200);
     check("playbook_nav_present", listHtml.includes(">Playbook<") || listHtml.includes("Playbook"));
     check("playbook_new_link", listHtml.includes("/command-center/playbook/new"));
-    check("playbook_no_approve_button", !/Approve revision/i.test(listHtml));
 
     const filtered = await fetch(
       `${BASE}/command-center/playbook?category=service_area&validation=hypothesis`,
@@ -255,9 +254,15 @@ async function main() {
     const detailHtml = await detail.text();
     check("playbook_detail_200", detail.status === 200);
     check("playbook_detail_has_history", detailHtml.includes("Versions"));
-    check("playbook_detail_draft_only_banner", detailHtml.includes("Draft-only"));
-    check("playbook_detail_no_approve", !/name="approve"|Approve revision/i.test(detailHtml));
-    check("playbook_detail_no_retire", !/name="retire"|Retire revision/i.test(detailHtml));
+    // Discussion entry: no Approve for agents until Validated
+    check(
+      "discussion_detail_no_approve_for_agents",
+      !detailHtml.includes("Approve for agents")
+    );
+    check(
+      "discussion_detail_validated_gate_copy",
+      detailHtml.includes("Validated MCS rule")
+    );
 
     const neu = await fetch(`${BASE}/command-center/playbook/new`, { headers: { cookie } });
     const neuHtml = await neu.text();
@@ -270,7 +275,7 @@ async function main() {
       neuHtml.includes("Validated MCS rule") && neuHtml.includes("Working hypothesis")
     );
 
-    // Lead detail still has no Playbook agent exposure wording from retrieval
+    // Lead detail still has no separate Playbook panel UI (retrieval is prompt-side only)
     const [lead] = await sql`SELECT id FROM leads ORDER BY created_at DESC LIMIT 1`;
     if (lead?.id) {
       const leadPage = await fetch(`${BASE}/command-center/leads/${lead.id}`, {
@@ -278,8 +283,8 @@ async function main() {
       });
       const leadHtml = await leadPage.text();
       check(
-        "lead_agent_no_playbook_retrieval_ui",
-        leadPage.status === 200 && !leadHtml.includes("APPROVED_MCS_PLAYBOOK")
+        "lead_detail_no_playbook_admin_panel",
+        leadPage.status === 200 && !leadHtml.includes("/command-center/playbook/new")
       );
     }
   }

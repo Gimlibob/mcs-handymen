@@ -7,6 +7,8 @@ import {
   createPlaybookEntryAction,
   updatePlaybookDraftRevisionAction,
   updatePlaybookEntryMetadataAction,
+  approvePlaybookRevisionAction,
+  retirePlaybookRevisionAction,
 } from "@/lib/cc/actions/playbook";
 import {
   PLAYBOOK_ALL_SERVICES_KEY,
@@ -497,5 +499,94 @@ export function PlaybookNewDraftForm({ entryId }) {
         {pending ? "Creating…" : "Add draft version"}
       </button>
     </form>
+  );
+}
+
+export function PlaybookApproveButton({ entryId, revisionId, version }) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState(null);
+
+  function onApprove() {
+    setError(null);
+    const ok = window.confirm(
+      `Approve version ${version}?\n\nApproved knowledge can be used by MCS AI agents.\nThis entry must remain "Validated MCS rule".`
+    );
+    if (!ok) return;
+    startTransition(async () => {
+      const result = await approvePlaybookRevisionAction(entryId, revisionId);
+      if (!result?.ok) {
+        const map = {
+          entry_not_validated:
+            "Only entries marked Validated MCS rule can be approved for agents.",
+          revision_not_draft: "Only draft versions can be approved.",
+          approve_failed: "Could not approve this version.",
+        };
+        setError(map[result?.error] || "Could not approve this version.");
+        return;
+      }
+      router.refresh();
+    });
+  }
+
+  return (
+    <div className="mt-3">
+      {error ? (
+        <p role="alert" className="mb-2 text-sm text-red-300">
+          {error}
+        </p>
+      ) : null}
+      <button
+        type="button"
+        disabled={pending}
+        onClick={onApprove}
+        className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-60"
+      >
+        {pending ? "Approving…" : "Approve for agents"}
+      </button>
+      <p className="mt-1.5 text-[11px] text-muted">
+        Approved knowledge can be used by MCS AI agents.
+      </p>
+    </div>
+  );
+}
+
+export function PlaybookRetireButton({ entryId, revisionId, version }) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState(null);
+
+  function onRetire() {
+    setError(null);
+    const ok = window.confirm(
+      `Retire version ${version}?\n\nIt will immediately stop being used by MCS AI agents.\nHistory is kept.`
+    );
+    if (!ok) return;
+    startTransition(async () => {
+      const result = await retirePlaybookRevisionAction(entryId, revisionId);
+      if (!result?.ok) {
+        setError("Could not retire this version.");
+        return;
+      }
+      router.refresh();
+    });
+  }
+
+  return (
+    <div className="mt-3">
+      {error ? (
+        <p role="alert" className="mb-2 text-sm text-red-300">
+          {error}
+        </p>
+      ) : null}
+      <button
+        type="button"
+        disabled={pending}
+        onClick={onRetire}
+        className="rounded-lg border border-red-500/40 px-3 py-1.5 text-sm font-medium text-red-200 hover:bg-red-500/10 disabled:opacity-60"
+      >
+        {pending ? "Retiring…" : "Retire from agents"}
+      </button>
+    </div>
   );
 }

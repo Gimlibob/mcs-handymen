@@ -2,8 +2,8 @@
 
 Architecture documentation for MCS Handymen Command Center AI agents.
 
-**Status:** Validated architecture. Phase 4A Lead Agent is implemented in code · pending live OpenAI validation. Later agents / Marketing Analytics remain documentation only until an explicit GO.  
-**Do not implement** Playbook, Job Prep, Marketing Analytics, or later agents from this file until an explicit GO.
+**Status:** Validated architecture. Phase 4A Lead Agent + 4A.5 Playbook (incl. Approve/retrieval when present) · Marketing Analytics remain documentation only until an explicit GO.  
+**Do not implement** Job Prep, Marketing Analytics, or later agents from this file until an explicit GO.
 
 ## Current CRM checkpoints
 
@@ -232,7 +232,7 @@ Owner-facing analytics surface for paid and organic marketing performance. Histo
 | Stage | Focus | Status |
 | --- | --- | --- |
 | **Phase 4A** | Lead Agent — read-only analysis on Lead Detail | Implemented · pending live OpenAI validation |
-| **Phase 4A.5** | MCS Playbook / Knowledge System foundations | Future |
+| **Phase 4A.5** | MCS Playbook foundations (draft UI) + **4A.5.c Approve/Retire + Lead Agent retrieval** | Foundations shipped · Approve/retrieval when implemented |
 | **Phase 4B** | Job Prep / Technical Agent | Future |
 | **Later** | Estimate / Pricing Agent | Future |
 | **Later** | Follow-up Agent | Future |

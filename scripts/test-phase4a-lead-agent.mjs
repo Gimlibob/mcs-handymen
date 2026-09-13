@@ -114,7 +114,7 @@ async function main() {
     "prompt_uncertainties_no_filler",
     LEAD_AGENT_SYSTEM_PROMPT.includes("Prefer an empty array over filler")
   );
-  check("prompt_version_v2", LEAD_AGENT_PROMPT_VERSION === "lead-agent-4a-v2");
+  check("prompt_version_v3", LEAD_AGENT_PROMPT_VERSION === "lead-agent-4a-v3");
 
   const incoherentQuestions = validateLeadAnalysis(
     sampleAnalysis({
@@ -237,7 +237,7 @@ async function main() {
     leadId,
     provider: "openai",
     model: "gpt-4o-mini",
-    promptVersion: "lead-agent-4a-v2",
+    promptVersion: "lead-agent-4a-v3",
     inputFingerprint: fingerprint,
     crmNextActionSnapshot: crmNext,
     analysis: sampleAnalysis({
@@ -276,7 +276,7 @@ async function main() {
     leadId,
     provider: "openai",
     model: "gpt-4o-mini",
-    promptVersion: "lead-agent-4a-v2",
+    promptVersion: "lead-agent-4a-v3",
     inputFingerprint: `${fingerprint}b`,
     crmNextActionSnapshot: crmNext,
     analysis: sampleAnalysis({ factual_summary: `Second analysis ${marker}` }),
@@ -326,7 +326,7 @@ async function main() {
       leadId,
       provider: "openai",
       model: "gpt-4o-mini",
-      promptVersion: "lead-agent-4a-v2",
+      promptVersion: "lead-agent-4a-v3",
       inputFingerprint: `${fingerprint}-c1`,
       crmNextActionSnapshot: crmNext,
       analysis: sampleAnalysis({ factual_summary: `Concurrent A ${marker}` }),
@@ -336,7 +336,7 @@ async function main() {
       leadId,
       provider: "openai",
       model: "gpt-4o-mini",
-      promptVersion: "lead-agent-4a-v2",
+      promptVersion: "lead-agent-4a-v3",
       inputFingerprint: `${fingerprint}-c2`,
       crmNextActionSnapshot: crmNext,
       analysis: sampleAnalysis({ factual_summary: `Concurrent B ${marker}` }),
@@ -346,7 +346,7 @@ async function main() {
       leadId,
       provider: "openai",
       model: "gpt-4o-mini",
-      promptVersion: "lead-agent-4a-v2",
+      promptVersion: "lead-agent-4a-v3",
       inputFingerprint: `${fingerprint}-c3`,
       crmNextActionSnapshot: crmNext,
       analysis: sampleAnalysis({ factual_summary: `Concurrent C ${marker}` }),
@@ -383,7 +383,7 @@ async function main() {
     leadId: "00000000-0000-4000-8000-000000000097",
     provider: "openai",
     model: "gpt-4o-mini",
-    promptVersion: "lead-agent-4a-v2",
+    promptVersion: "lead-agent-4a-v3",
     inputFingerprint: `${fingerprint}-missing`,
     crmNextActionSnapshot: crmNext,
     analysis: sampleAnalysis(),

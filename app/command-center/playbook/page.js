@@ -66,8 +66,8 @@ export default async function PlaybookListPage({ searchParams }) {
               Playbook
             </h1>
             <p className="mt-2 max-w-3xl text-base text-muted">
-              MCS rules and procedures for the business. Drafts only in this phase — nothing is
-              approved for agents yet.
+              MCS rules and procedures. Mark a rule Validated, then Approve a draft so agents can use
+              it. Hypothesis and discussion stay owner-only.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">

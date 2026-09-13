@@ -3,9 +3,11 @@ import { notFound } from "next/navigation";
 import { requireOwner } from "@/lib/cc/auth/dal";
 import CommandCenterShell from "@/components/cc/CommandCenterShell";
 import {
+  PlaybookApproveButton,
   PlaybookDraftEditForm,
   PlaybookEntryMetadataForm,
   PlaybookNewDraftForm,
+  PlaybookRetireButton,
 } from "@/components/cc/PlaybookForms";
 import { PlaybookStatusBadge } from "@/components/cc/PlaybookTable";
 import {
@@ -106,7 +108,8 @@ export default async function PlaybookDetailPage({ params }) {
             Applies to {serviceNames(entry.service_keys)}
           </p>
           <p className="mt-2 text-xs text-muted">
-            Draft-only phase — Approve / Retire / agent use are not available here.
+            Only entries marked Validated MCS rule can be approved. Approved knowledge can be used by
+            MCS AI agents. Hypothesis and discussion stay owner-only drafts.
           </p>
         </div>
 
@@ -223,6 +226,26 @@ export default async function PlaybookDetailPage({ params }) {
                         </summary>
                         <p className="mt-1 break-all">{rev.id}</p>
                       </details>
+                      {rev.status === "draft" && entry.validation_state === "validated" ? (
+                        <PlaybookApproveButton
+                          entryId={entry.id}
+                          revisionId={rev.id}
+                          version={rev.version}
+                        />
+                      ) : null}
+                      {rev.status === "draft" && entry.validation_state !== "validated" ? (
+                        <p className="mt-2 text-xs text-muted">
+                          Set Status to Validated MCS rule before this draft can be approved for
+                          agents.
+                        </p>
+                      ) : null}
+                      {rev.status === "approved" ? (
+                        <PlaybookRetireButton
+                          entryId={entry.id}
+                          revisionId={rev.id}
+                          version={rev.version}
+                        />
+                      ) : null}
                       {rev.status !== "draft" ? (
                         <p className="mt-2 text-xs text-muted">
                           Locked — approved/retired versions cannot be edited here.

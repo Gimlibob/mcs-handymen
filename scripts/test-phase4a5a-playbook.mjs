@@ -213,12 +213,17 @@ async function main() {
   check("customers_count_unchanged", customersAfter.count === customersBefore.count);
   check("ai_lead_analyses_count_unchanged", aiAfter.count === aiBefore.count);
 
-  // No MCS $125 seed inserted by this phase
+  // No MCS $125 seed inserted by this phase (slug-based; do not match timestamps in titles)
   const [seeded] = await sql`
     SELECT COUNT(*)::int AS count
     FROM playbook_entries
     WHERE slug IN ('minimum-service-call', 'min-service-call', 'min-service-call-usd')
-       OR title ILIKE '%125%'
+       OR (
+         slug NOT LIKE 'test-%'
+         AND slug NOT LIKE 'ui-%'
+         AND title ILIKE '%minimum service call%'
+         AND title ILIKE '%125%'
+       )
   `;
   check("no_auto_seed_min_service_call", seeded.count === 0, `count=${seeded.count}`);
 

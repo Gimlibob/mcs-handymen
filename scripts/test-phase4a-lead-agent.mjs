@@ -289,6 +289,111 @@ async function main() {
   `;
   check("old_row_superseded", oldRow.superseded_by === second.analysis.id);
 
+  const [activeCountAfterTwo] = await sql`
+    SELECT COUNT(*)::int AS count
+    FROM ai_lead_analyses
+    WHERE lead_id = ${leadId} AND superseded_by IS NULL
+  `;
+  check("exactly_one_active_after_replace", activeCountAfterTwo.count === 1);
+
+  const uniqueIdx = await sql`
+    SELECT indexname, indexdef
+    FROM pg_indexes
+    WHERE tablename = 'ai_lead_analyses'
+      AND indexname = 'ai_lead_analyses_active_per_lead_uidx'
+  `;
+  check(
+    "active_per_lead_unique_index",
+    uniqueIdx.length === 1 && /UNIQUE/i.test(uniqueIdx[0].indexdef)
+  );
+
+  const deferredFk = await sql`
+    SELECT c.condeferrable, c.condeferred
+    FROM pg_constraint c
+    JOIN pg_class t ON t.oid = c.conrelid
+    WHERE t.relname = 'ai_lead_analyses'
+      AND c.conname = 'ai_lead_analyses_superseded_by_fkey'
+  `;
+  check(
+    "superseded_by_fk_deferrable",
+    deferredFk[0]?.condeferrable === true,
+    `deferrable=${deferredFk[0]?.condeferrable}`
+  );
+
+  // Overlapping persistence: concurrent inserts must leave exactly one active.
+  const concurrent = await Promise.all([
+    insertLeadAnalysis({
+      leadId,
+      provider: "openai",
+      model: "gpt-4o-mini",
+      promptVersion: "lead-agent-4a-v2",
+      inputFingerprint: `${fingerprint}-c1`,
+      crmNextActionSnapshot: crmNext,
+      analysis: sampleAnalysis({ factual_summary: `Concurrent A ${marker}` }),
+      createdBy: "test",
+    }),
+    insertLeadAnalysis({
+      leadId,
+      provider: "openai",
+      model: "gpt-4o-mini",
+      promptVersion: "lead-agent-4a-v2",
+      inputFingerprint: `${fingerprint}-c2`,
+      crmNextActionSnapshot: crmNext,
+      analysis: sampleAnalysis({ factual_summary: `Concurrent B ${marker}` }),
+      createdBy: "test",
+    }),
+    insertLeadAnalysis({
+      leadId,
+      provider: "openai",
+      model: "gpt-4o-mini",
+      promptVersion: "lead-agent-4a-v2",
+      inputFingerprint: `${fingerprint}-c3`,
+      crmNextActionSnapshot: crmNext,
+      analysis: sampleAnalysis({ factual_summary: `Concurrent C ${marker}` }),
+      createdBy: "test",
+    }),
+  ]);
+  const concurrentOk = concurrent.every((r) => r.ok === true);
+  check("concurrent_inserts_all_ok", concurrentOk, concurrent.map((r) => r.error).filter(Boolean).join(",") || "");
+  const [activeAfterConcurrent] = await sql`
+    SELECT COUNT(*)::int AS count
+    FROM ai_lead_analyses
+    WHERE lead_id = ${leadId} AND superseded_by IS NULL
+  `;
+  check("concurrent_exactly_one_active", activeAfterConcurrent.count === 1);
+  const latestConcurrent = await getLatestLeadAnalysis(leadId);
+  const concurrentIds = concurrent.map((r) => r.analysis?.id).filter(Boolean);
+  check(
+    "concurrent_latest_is_one_of_inserts",
+    concurrentIds.includes(latestConcurrent?.id)
+  );
+  const [supersededChain] = await sql`
+    SELECT COUNT(*)::int AS count
+    FROM ai_lead_analyses
+    WHERE lead_id = ${leadId}
+      AND superseded_by IS NOT NULL
+  `;
+  check(
+    "supersession_chain_has_history",
+    supersededChain.count >= 4
+  );
+
+  // Missing lead must fail without orphan writes.
+  const missing = await insertLeadAnalysis({
+    leadId: "00000000-0000-4000-8000-000000000097",
+    provider: "openai",
+    model: "gpt-4o-mini",
+    promptVersion: "lead-agent-4a-v2",
+    inputFingerprint: `${fingerprint}-missing`,
+    crmNextActionSnapshot: crmNext,
+    analysis: sampleAnalysis(),
+    createdBy: "test",
+  });
+  check(
+    "missing_lead_rolls_back",
+    missing.ok === false && missing.error === "lead_not_found"
+  );
+
   // --- Full analyze path with mock LLM (no CRM mutation) ---
   const statusBefore = lead.status;
   const updatedBefore = String(lead.updated_at);

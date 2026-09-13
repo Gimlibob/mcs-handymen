@@ -6,6 +6,7 @@ import { LeadCustomerBadge } from "@/components/cc/CustomersTable";
 import { AddNoteForm, StatusChangeForm } from "@/components/cc/LeadActions";
 import LeadAgentPanel from "@/components/cc/LeadAgentPanel";
 import { getLatestLeadAnalysis } from "@/lib/cc/db/ai-lead-analyses";
+import { getActiveLeadFeedbackForAnalysis } from "@/lib/cc/db/ai-lead-feedback";
 import { getCustomerSummaryForLead } from "@/lib/cc/db/customers";
 import {
   getLeadActivity,
@@ -104,6 +105,16 @@ export default async function LeadDetailPage({ params }) {
       return null;
     }),
   ]);
+
+  let activeFeedback = null;
+  if (latestAnalysis?.id) {
+    try {
+      activeFeedback = await getActiveLeadFeedbackForAnalysis(latestAnalysis.id);
+    } catch {
+      console.error("[cc/lead] ai feedback load failed");
+      activeFeedback = null;
+    }
+  }
 
   const allowedNext = getAllowedNextStatuses(lead.status);
   const nextAction = getNextAction(lead.status);
@@ -285,6 +296,7 @@ export default async function LeadDetailPage({ params }) {
               leadId={lead.id}
               crmNextAction={nextAction}
               latestAnalysis={latestAnalysis}
+              activeFeedback={activeFeedback}
             />
 
             <Panel title="Photos">

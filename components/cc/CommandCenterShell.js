@@ -6,6 +6,7 @@ const NAV = [
   { href: "/command-center", label: "Dashboard", exact: true },
   { href: "/command-center/leads", label: "Leads", exact: false },
   { href: "/command-center/customers", label: "Customers", exact: false },
+  { href: "/command-center/playbook", label: "Playbook", exact: false },
 ];
 
 function isActive(pathname, item) {

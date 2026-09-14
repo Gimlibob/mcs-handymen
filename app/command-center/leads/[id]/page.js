@@ -3,17 +3,20 @@ import { notFound } from "next/navigation";
 import { requireOwner } from "@/lib/cc/auth/dal";
 import CommandCenterShell from "@/components/cc/CommandCenterShell";
 import { LeadCustomerBadge } from "@/components/cc/CustomersTable";
+import { CreateJobFromLeadButton } from "@/components/cc/JobActions";
 import { AddNoteForm, StatusChangeForm } from "@/components/cc/LeadActions";
 import LeadAgentPanel from "@/components/cc/LeadAgentPanel";
 import { getLatestLeadAnalysis } from "@/lib/cc/db/ai-lead-analyses";
 import { getActiveLeadFeedbackForAnalysis } from "@/lib/cc/db/ai-lead-feedback";
 import { getCustomerSummaryForLead } from "@/lib/cc/db/customers";
+import { getActiveJobForLead } from "@/lib/cc/db/jobs";
 import {
   getLeadActivity,
   getLeadById,
   getLeadNotes,
   getLeadPhotos,
 } from "@/lib/cc/db/leads";
+import { isLeadEligibleForJobCreate, jobStatusLabel } from "@/lib/cc/domain/job-status";
 import {
   getAllowedNextStatuses,
   getNextAction,
@@ -95,16 +98,21 @@ export default async function LeadDetailPage({ params }) {
 
   if (!lead) notFound();
 
-  const [photos, notes, activity, customerSummary, latestAnalysis] = await Promise.all([
-    getLeadPhotos(lead.id),
-    getLeadNotes(lead.id),
-    getLeadActivity(lead.id),
-    getCustomerSummaryForLead(lead.customer_id),
-    getLatestLeadAnalysis(lead.id).catch(() => {
-      console.error("[cc/lead] ai analysis load failed");
-      return null;
-    }),
-  ]);
+  const [photos, notes, activity, customerSummary, latestAnalysis, activeJob] =
+    await Promise.all([
+      getLeadPhotos(lead.id),
+      getLeadNotes(lead.id),
+      getLeadActivity(lead.id),
+      getCustomerSummaryForLead(lead.customer_id),
+      getLatestLeadAnalysis(lead.id).catch(() => {
+        console.error("[cc/lead] ai analysis load failed");
+        return null;
+      }),
+      getActiveJobForLead(lead.id).catch(() => {
+        console.error("[cc/lead] job load failed");
+        return null;
+      }),
+    ]);
 
   let activeFeedback = null;
   if (latestAnalysis?.id) {
@@ -278,10 +286,23 @@ export default async function LeadDetailPage({ params }) {
               )}
             </Panel>
 
-            {/*
-              Future (not Phase 3.5): jobs, payments, LTV, attribution — do not invent here.
-              Customer Profile / tags / notes live at /command-center/customers/[id].
-            */}
+            {(activeJob || isLeadEligibleForJobCreate(lead.status)) && (
+              <Panel title="Job" compact>
+                {activeJob ? (
+                  <div className="flex flex-col gap-2">
+                    <p className="text-sm text-foreground">
+                      Active Job · {jobStatusLabel(activeJob.status)}
+                    </p>
+                    <CreateJobFromLeadButton
+                      leadId={lead.id}
+                      existingJobId={activeJob.id}
+                    />
+                  </div>
+                ) : (
+                  <CreateJobFromLeadButton leadId={lead.id} />
+                )}
+              </Panel>
+            )}
           </div>
 
           {/* Center — work surface */}

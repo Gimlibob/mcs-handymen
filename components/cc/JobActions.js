@@ -79,9 +79,10 @@ export function CreateJobFromLeadButton({ leadId, existingJobId = null }) {
 
 /**
  * Job Detail — minimal status change control.
+ * After a successful write, use full navigation (not router.refresh) so the
+ * page remounts reliably — soft RSC refresh failed in Production smoke.
  */
 export function JobStatusChangeForm({ jobId, currentStatus, allowedNext = [] }) {
-  const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState(null);
   const [next, setNext] = useState(allowedNext[0] || "");
@@ -108,7 +109,7 @@ export function JobStatusChangeForm({ jobId, currentStatus, allowedNext = [] }) 
         );
         return;
       }
-      router.refresh();
+      window.location.assign(`/command-center/jobs/${jobId}`);
     });
   }
 

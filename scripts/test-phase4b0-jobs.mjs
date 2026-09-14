@@ -8,6 +8,9 @@
  * Requires DATABASE_URL. Optional BASE_URL for auth redirect check.
  */
 import nextEnv from "@next/env";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { neon } from "@neondatabase/serverless";
 import { persistQuoteLead } from "../lib/cc/db/persist-quote-lead.js";
 import {
@@ -27,6 +30,9 @@ import { canTransitionLeadStatus } from "../lib/cc/domain/lead-status.js";
 
 const { loadEnvConfig } = nextEnv;
 loadEnvConfig(process.cwd());
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const ROOT = join(__dirname, "..");
 
 const BASE = (process.env.BASE_URL || "http://127.0.0.1:3000").replace(/\/$/, "");
 
@@ -63,6 +69,36 @@ async function advanceLeadToAccepted(leadId) {
 async function main() {
   assert(process.env.DATABASE_URL, "DATABASE_URL required");
   const sql = neon(process.env.DATABASE_URL);
+
+  // --- Post-update UI reliability (source contract) ---
+  const jobActionsSrc = readFileSync(join(ROOT, "components/cc/JobActions.js"), "utf8");
+  const statusFormMatch = jobActionsSrc.match(
+    /export function JobStatusChangeForm[\s\S]*?(?=export function|$)/
+  );
+  const statusFormSrc = statusFormMatch ? statusFormMatch[0] : "";
+  check(
+    "status_form_uses_full_navigation",
+    /window\.location\.assign\(`\/command-center\/jobs\/\$\{jobId\}`\)/.test(statusFormSrc),
+    "expected window.location.assign to Job Detail"
+  );
+  check(
+    "status_form_does_not_use_router_refresh",
+    statusFormSrc.length > 0 && !/router\.refresh\s*\(/.test(statusFormSrc),
+    "JobStatusChangeForm must not call router.refresh()"
+  );
+
+  const actionsSrc = readFileSync(join(ROOT, "lib/cc/actions/jobs.js"), "utf8");
+  const changeActionMatch = actionsSrc.match(
+    /export async function changeJobStatusAction[\s\S]*?(?=export async function|$)/
+  );
+  const changeActionSrc = changeActionMatch ? changeActionMatch[0] : "";
+  check(
+    "status_action_returns_slim_payload",
+    /ok:\s*true[\s\S]*?jobId:\s*result\.job\.id[\s\S]*?status:\s*result\.job\.status/.test(
+      changeActionSrc
+    ),
+    "changeJobStatusAction should return { ok, jobId, status }"
+  );
 
   // --- Domain rules ---
   check(

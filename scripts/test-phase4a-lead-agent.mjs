@@ -9,8 +9,8 @@
  * Default path uses an injected mock completer (no network).
  */
 import { createHash, createHmac, randomBytes } from "node:crypto";
-import nextEnv from "@next/env";
 import { neon } from "@neondatabase/serverless";
+import { bindProcessToSafeTestDatabase } from "./lib/db-write-safety.mjs";
 import { validateLeadAnalysis, checkLeadAnalysisCoherence } from "../lib/cc/ai/lead-agent/schema.js";
 import { buildLeadAgentUserPrompt, LEAD_AGENT_SYSTEM_PROMPT } from "../lib/cc/ai/lead-agent/prompt.js";
 import { LEAD_AGENT_PROMPT_VERSION } from "../lib/cc/ai/config.js";
@@ -24,11 +24,8 @@ import {
 } from "../lib/cc/db/ai-lead-analyses.js";
 import { getLeadById, getLeadNotes } from "../lib/cc/db/leads.js";
 import { persistQuoteLead } from "../lib/cc/db/persist-quote-lead.js";
+import { resolveHttpTestBase } from "./lib/dev-test-server.mjs";
 
-const { loadEnvConfig } = nextEnv;
-loadEnvConfig(process.cwd());
-
-const BASE = process.env.CC_TEST_BASE || "http://127.0.0.1:3000";
 const results = [];
 
 function check(name, cond, detail = "") {
@@ -76,7 +73,8 @@ function mockComplete(parsed = sampleAnalysis()) {
 }
 
 async function main() {
-  assert(process.env.DATABASE_URL, "DATABASE_URL required");
+  const { host } = bindProcessToSafeTestDatabase();
+  console.log(`DB_WRITE_TARGET_HOST=${host}`);
   const sql = neon(process.env.DATABASE_URL);
 
   // --- Schema migration present ---
@@ -435,35 +433,24 @@ async function main() {
   `;
   check("no_auto_analysis_on_ingest", autoCount.count === 0);
 
-  // --- Optional HTTP UI checks (dev server) ---
-  let httpChecked = false;
-  try {
-    const probe = await fetch(`${BASE}/`, { signal: AbortSignal.timeout(2000) });
-    httpChecked = probe.ok;
-  } catch {
-    httpChecked = false;
-  }
-
-  if (httpChecked) {
-    const cookie = mintOwnerCookie();
-    const page = await fetch(`${BASE}/command-center/leads/${leadId}`, {
-      headers: { cookie },
-    });
-    const html = await page.text();
-    check("lead_detail_200", page.status === 200);
-    check("ui_has_analyze_button", html.includes("Analyze Lead"));
-    check("ui_labels_crm_next_action", html.includes("CRM Next Action"));
-    check(
-      "ui_labels_ai_suggested",
-      html.includes("AI Suggested Next Action")
-    );
-    check(
-      "ui_read_only_disclaimer",
-      html.includes("does not change status") || html.includes("Suggestion only")
-    );
-  } else {
-    check("http_ui_skipped_no_server", true, `start dev server at ${BASE} to cover UI`);
-  }
+  // --- HTTP UI checks (managed Next on TEST_DATABASE_URL) ---
+  const BASE = await resolveHttpTestBase();
+  const cookie = mintOwnerCookie();
+  const page = await fetch(`${BASE}/command-center/leads/${leadId}`, {
+    headers: { cookie },
+  });
+  const html = await page.text();
+  check("lead_detail_200", page.status === 200);
+  check("ui_has_analyze_button", html.includes("Analyze Lead"));
+  check("ui_labels_crm_next_action", html.includes("CRM Next Action"));
+  check(
+    "ui_labels_ai_suggested",
+    html.includes("AI Suggested Next Action")
+  );
+  check(
+    "ui_read_only_disclaimer",
+    html.includes("does not change status") || html.includes("Suggestion only")
+  );
 
   // Optional live provider (does not fail suite if missing)
   if (process.env.OPENAI_API_KEY?.trim()) {

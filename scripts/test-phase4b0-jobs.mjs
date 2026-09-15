@@ -5,9 +5,9 @@
  * Usage:
  *   node scripts/test-phase4b0-jobs.mjs
  *
- * Requires DATABASE_URL. Optional BASE_URL for auth redirect check.
+ * Requires TEST_DATABASE_URL (Neon development). Optional BASE_URL for auth redirect.
+ * Never falls back to Production DATABASE_URL.
  */
-import nextEnv from "@next/env";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -27,9 +27,7 @@ import {
   JOB_STATUSES,
 } from "../lib/cc/domain/job-status.js";
 import { canTransitionLeadStatus } from "../lib/cc/domain/lead-status.js";
-
-const { loadEnvConfig } = nextEnv;
-loadEnvConfig(process.cwd());
+import { bindProcessToSafeTestDatabase } from "./lib/db-write-safety.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
@@ -67,7 +65,8 @@ async function advanceLeadToAccepted(leadId) {
 }
 
 async function main() {
-  assert(process.env.DATABASE_URL, "DATABASE_URL required");
+  const { host } = bindProcessToSafeTestDatabase();
+  console.log(`DB_WRITE_TARGET_HOST=${host}`);
   const sql = neon(process.env.DATABASE_URL);
 
   // --- Post-update UI reliability (source contract) ---

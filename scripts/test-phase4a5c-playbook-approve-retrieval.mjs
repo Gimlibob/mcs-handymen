@@ -6,8 +6,8 @@
  *   node scripts/test-phase4a5c-playbook-approve-retrieval.mjs
  */
 import { createHmac } from "node:crypto";
-import nextEnv from "@next/env";
 import { neon } from "@neondatabase/serverless";
+import { bindProcessToSafeTestDatabase } from "./lib/db-write-safety.mjs";
 import { LEAD_AGENT_PROMPT_VERSION } from "../lib/cc/ai/config.js";
 import { buildLeadAgentContext } from "../lib/cc/ai/lead-agent/context.js";
 import {
@@ -27,11 +27,8 @@ import {
 } from "../lib/cc/db/playbook.js";
 import { getLeadById } from "../lib/cc/db/leads.js";
 import { persistQuoteLead } from "../lib/cc/db/persist-quote-lead.js";
+import { resolveHttpTestBase } from "./lib/dev-test-server.mjs";
 
-const { loadEnvConfig } = nextEnv;
-loadEnvConfig(process.cwd());
-
-const BASE = process.env.CC_TEST_BASE || "http://127.0.0.1:3000";
 const results = [];
 
 function check(name, cond, detail = "") {
@@ -53,7 +50,8 @@ function mintOwnerCookie() {
 }
 
 async function main() {
-  assert(process.env.DATABASE_URL, "DATABASE_URL required");
+  const { host } = bindProcessToSafeTestDatabase();
+  console.log(`DB_WRITE_TARGET_HOST=${host}`);
   const sql = neon(process.env.DATABASE_URL);
   const stamp = Date.now();
 
@@ -414,7 +412,8 @@ async function main() {
       String(leadAfter.updated_at) === leadBefore.updated_at
   );
 
-  // --- UI / auth ---
+  // --- UI / auth (managed Next on TEST_DATABASE_URL) ---
+  const BASE = await resolveHttpTestBase();
   const unauth = await fetch(`${BASE}/command-center/playbook/${entryId}`, {
     redirect: "manual",
   });

@@ -3,29 +3,63 @@
  * Apply pending SQL migrations in lib/cc/db/migrations/
  *
  * Usage:
- *   node scripts/cc-migrate.mjs
+ *   node scripts/cc-migrate.mjs --test
+ *     → uses TEST_DATABASE_URL (Neon development). Refuses Production.
  *
- * Requires DATABASE_URL (Neon Postgres connection string).
+ *   ALLOW_PROD_MIGRATE=1 node scripts/cc-migrate.mjs
+ *     → uses DATABASE_URL only when explicitly allowed (Production opt-in).
+ *
+ * Without --test or ALLOW_PROD_MIGRATE=1, Production DATABASE_URL is refused.
  */
 import { readFileSync, readdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import nextEnv from "@next/env";
 import { neon } from "@neondatabase/serverless";
+import {
+  assertSafeTestDatabaseUrl,
+  databaseHostFromUrl,
+  isProductionDatabaseHost,
+  loadLocalEnv,
+} from "./lib/db-write-safety.mjs";
 
-const { loadEnvConfig } = nextEnv;
-
-loadEnvConfig(process.cwd());
+loadLocalEnv();
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const migrationsDir = join(__dirname, "..", "lib", "cc", "db", "migrations");
 
+const args = new Set(process.argv.slice(2));
+const useTest = args.has("--test");
+
 function getDatabaseUrl() {
+  if (useTest) {
+    const { url, host } = assertSafeTestDatabaseUrl({ allowEnvLoad: false });
+    console.log(`migrate_target=TEST_DATABASE_URL host=${host}`);
+    return url;
+  }
+
   const url = process.env.DATABASE_URL?.trim();
   if (!url) {
-    console.error("DATABASE_URL is not set. Add it to .env.local or the environment.");
+    console.error(
+      "DATABASE_URL is not set. For development migrations use: node scripts/cc-migrate.mjs --test"
+    );
     process.exit(1);
   }
+
+  const host = databaseHostFromUrl(url);
+  if (isProductionDatabaseHost(host)) {
+    if (process.env.ALLOW_PROD_MIGRATE?.trim() !== "1") {
+      console.error(
+        "REFUSED: database writes are not allowed against Production.\n" +
+          "Use: node scripts/cc-migrate.mjs --test\n" +
+          "Or set ALLOW_PROD_MIGRATE=1 only for an intentional Production migrate."
+      );
+      process.exit(1);
+    }
+    console.log(`migrate_target=DATABASE_URL host=${host} (ALLOW_PROD_MIGRATE=1)`);
+    return url;
+  }
+
+  console.log(`migrate_target=DATABASE_URL host=${host || "(unknown)"}`);
   return url;
 }
 
@@ -38,7 +72,18 @@ function splitStatements(sqlText) {
 }
 
 async function main() {
-  const sql = neon(getDatabaseUrl());
+  const databaseUrl = getDatabaseUrl();
+  const host = databaseHostFromUrl(databaseUrl);
+  if (isProductionDatabaseHost(host) && !useTest && process.env.ALLOW_PROD_MIGRATE?.trim() !== "1") {
+    console.error("REFUSED: database writes are not allowed against Production.");
+    process.exit(1);
+  }
+  if (useTest && isProductionDatabaseHost(host)) {
+    console.error("REFUSED: --test resolved to Production endpoint. Aborting.");
+    process.exit(1);
+  }
+
+  const sql = neon(databaseUrl);
 
   await sql`
     CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -72,7 +117,6 @@ async function main() {
     console.log(`apply ${file} (${statements.length} statements)`);
 
     for (const statement of statements) {
-      // schema_migrations CREATE is idempotent; migration file may include it.
       await sql.query(statement);
     }
 

@@ -2,10 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireOwner } from "@/lib/cc/auth/dal";
 import CommandCenterShell from "@/components/cc/CommandCenterShell";
-import { JobStatusChangeForm } from "@/components/cc/JobActions";
+import { JobAssignmentForm, JobStatusChangeForm } from "@/components/cc/JobActions";
 import { getCustomerById } from "@/lib/cc/db/customers";
 import { getJobById } from "@/lib/cc/db/jobs";
 import { getLeadById, getLeadPhotos } from "@/lib/cc/db/leads";
+import { getWorkerById, listWorkers } from "@/lib/cc/db/workers";
 import {
   getAllowedNextJobStatuses,
   jobStatusLabel,
@@ -75,10 +76,14 @@ export default async function JobDetailPage({ params }) {
 
   if (!job) notFound();
 
-  const [lead, customer, photos] = await Promise.all([
+  const [lead, customer, photos, assignee, activeWorkers] = await Promise.all([
     getLeadById(job.lead_id),
     getCustomerById(job.customer_id),
     getLeadPhotos(job.lead_id).catch(() => []),
+    job.assigned_worker_id
+      ? getWorkerById(job.assigned_worker_id).catch(() => null)
+      : Promise.resolve(null),
+    listWorkers({ status: "active", limit: 200 }).catch(() => []),
   ]);
 
   const allowedNext = getAllowedNextJobStatuses(job.status);
@@ -161,6 +166,16 @@ export default async function JobDetailPage({ params }) {
                   allowedNext={allowedNext}
                 />
               </div>
+            </Panel>
+
+            <Panel title="Assigned Worker" compact>
+              <JobAssignmentForm
+                jobId={job.id}
+                assignedWorkerId={job.assigned_worker_id || null}
+                assignedDisplayName={assignee?.display_name || null}
+                assignedIsInactive={assignee?.status === "inactive"}
+                activeWorkers={activeWorkers}
+              />
             </Panel>
 
             <Panel title="Relationships" compact>

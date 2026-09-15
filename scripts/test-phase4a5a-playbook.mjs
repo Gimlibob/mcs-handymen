@@ -8,8 +8,8 @@
  * No UI, no Lead Agent wiring, no business-rule seed.
  */
 import { randomBytes } from "node:crypto";
-import nextEnv from "@next/env";
 import { neon } from "@neondatabase/serverless";
+import { bindProcessToSafeTestDatabase } from "./lib/db-write-safety.mjs";
 import {
   PLAYBOOK_CATEGORIES,
   PLAYBOOK_REVISION_STATUSES,
@@ -28,8 +28,6 @@ import {
   listPlaybookRevisionsForEntry,
 } from "../lib/cc/db/playbook.js";
 
-const { loadEnvConfig } = nextEnv;
-loadEnvConfig(process.cwd());
 
 const results = [];
 
@@ -43,7 +41,8 @@ function assert(cond, msg) {
 }
 
 async function main() {
-  assert(process.env.DATABASE_URL, "DATABASE_URL required");
+  const { host } = bindProcessToSafeTestDatabase();
+  console.log(`DB_WRITE_TARGET_HOST=${host}`);
   const sql = neon(process.env.DATABASE_URL);
 
   // --- Migration ---
@@ -104,6 +103,9 @@ async function main() {
     assertRevisionStatusTransitionAllowed("draft", "approved") === true
   );
   check("invalid_status_rejected", isValidPlaybookRevisionStatus("published") === false);
+
+  // --- CRM / AI isolation: no inserts into these tables during playbook writes ---
+  const isolationAnchor = new Date().toISOString();
 
   // --- CRM / AI row counts before playbook writes ---
   const [leadsBefore] = await sql`SELECT COUNT(*)::int AS count FROM leads`;
@@ -205,13 +207,34 @@ async function main() {
   `;
   check("one_approved_per_entry_index", idx.length === 1);
 
-  // --- Isolation: playbook writes did not mutate CRM / AI counts ---
+  // --- Isolation: playbook writes did not insert CRM / AI rows in this suite window ---
   const [leadsAfter] = await sql`SELECT COUNT(*)::int AS count FROM leads`;
   const [customersAfter] = await sql`SELECT COUNT(*)::int AS count FROM customers`;
   const [aiAfter] = await sql`SELECT COUNT(*)::int AS count FROM ai_lead_analyses`;
-  check("leads_count_unchanged", leadsAfter.count === leadsBefore.count);
-  check("customers_count_unchanged", customersAfter.count === customersBefore.count);
-  check("ai_lead_analyses_count_unchanged", aiAfter.count === aiBefore.count);
+  const [leadsInserted] = await sql`
+    SELECT COUNT(*)::int AS count FROM leads WHERE created_at >= ${isolationAnchor}
+  `;
+  const [customersInserted] = await sql`
+    SELECT COUNT(*)::int AS count FROM customers WHERE created_at >= ${isolationAnchor}
+  `;
+  const [aiInserted] = await sql`
+    SELECT COUNT(*)::int AS count FROM ai_lead_analyses WHERE created_at >= ${isolationAnchor}
+  `;
+  check(
+    "leads_count_unchanged",
+    leadsAfter.count === leadsBefore.count && leadsInserted.count === 0,
+    `before=${leadsBefore.count} after=${leadsAfter.count} inserted=${leadsInserted.count}`
+  );
+  check(
+    "customers_count_unchanged",
+    customersAfter.count === customersBefore.count && customersInserted.count === 0,
+    `before=${customersBefore.count} after=${customersAfter.count} inserted=${customersInserted.count}`
+  );
+  check(
+    "ai_lead_analyses_count_unchanged",
+    aiAfter.count === aiBefore.count && aiInserted.count === 0,
+    `before=${aiBefore.count} after=${aiAfter.count} inserted=${aiInserted.count}`
+  );
 
   // No MCS $125 seed inserted by this phase (slug-based; do not match timestamps in titles)
   const [seeded] = await sql`

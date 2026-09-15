@@ -3,8 +3,8 @@
  * Phase 3.5 Customer Profile acceptance tests.
  */
 import { createHmac, randomBytes } from "node:crypto";
-import nextEnv from "@next/env";
 import { neon } from "@neondatabase/serverless";
+import { bindProcessToSafeTestDatabase } from "./lib/db-write-safety.mjs";
 import { normalizeCustomerEmail, getCustomerRecurrence } from "../lib/cc/domain/customer-match.js";
 import { CUSTOMER_TAG_KEYS } from "../lib/cc/domain/customer-tags.js";
 import {
@@ -18,11 +18,8 @@ import {
   setCustomerTags,
 } from "../lib/cc/db/customers.js";
 import { persistQuoteLead } from "../lib/cc/db/persist-quote-lead.js";
+import { resolveHttpTestBase } from "./lib/dev-test-server.mjs";
 
-const { loadEnvConfig } = nextEnv;
-loadEnvConfig(process.cwd());
-
-const BASE = process.env.CC_TEST_BASE || "http://127.0.0.1:3000";
 const results = [];
 
 function check(name, cond, detail = "") {
@@ -66,7 +63,9 @@ function sampleLead(overrides = {}) {
 }
 
 async function main() {
-  assert(process.env.DATABASE_URL, "DATABASE_URL required");
+  const { host } = bindProcessToSafeTestDatabase();
+  console.log(`DB_WRITE_TARGET_HOST=${host}`);
+  const BASE = await resolveHttpTestBase();
   const sql = neon(process.env.DATABASE_URL);
   const cookie = mintOwnerCookie();
 

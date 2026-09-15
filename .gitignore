@@ -12,6 +12,7 @@
 
 # testing
 /coverage
+.mcs-cc-test-server.json
 
 # next.js
 /.next/

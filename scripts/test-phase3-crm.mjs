@@ -2,8 +2,8 @@
 /**
  * Phase 3 CRM domain + DB checks (no AI).
  */
-import nextEnv from "@next/env";
 import { neon } from "@neondatabase/serverless";
+import { bindProcessToSafeTestDatabase } from "./lib/db-write-safety.mjs";
 import {
   canTransitionLeadStatus,
   getNextAction,
@@ -15,8 +15,6 @@ import {
   updateLeadStatus,
 } from "../lib/cc/db/leads.js";
 
-const { loadEnvConfig } = nextEnv;
-loadEnvConfig(process.cwd());
 
 function assert(cond, msg) {
   if (!cond) throw new Error(msg);
@@ -48,10 +46,8 @@ async function main() {
   assert(getNextAction("closed_won") === null, "next action: closed has none");
   console.log("PASS — next action rules");
 
-  if (!process.env.DATABASE_URL) {
-    console.log("SKIP DB checks — no DATABASE_URL");
-    return;
-  }
+  const { host } = bindProcessToSafeTestDatabase();
+  console.log(`DB_WRITE_TARGET_HOST=${host}`);
 
   const sql = neon(process.env.DATABASE_URL);
   const [lead] = await sql`

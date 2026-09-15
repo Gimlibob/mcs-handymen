@@ -3,14 +3,11 @@
  * Phase 3 final acceptance checks (HTTP + domain).
  */
 import { createHmac } from "node:crypto";
-import nextEnv from "@next/env";
 import { neon } from "@neondatabase/serverless";
+import { bindProcessToSafeTestDatabase } from "./lib/db-write-safety.mjs";
+import { resolveHttpTestBase } from "./lib/dev-test-server.mjs";
 import { getNextAction } from "../lib/cc/domain/lead-status.js";
 
-const { loadEnvConfig } = nextEnv;
-loadEnvConfig(process.cwd());
-
-const BASE = process.env.CC_TEST_BASE || "http://127.0.0.1:3000";
 const results = [];
 
 function assert(cond, msg) {
@@ -32,6 +29,9 @@ function mintOwnerCookie() {
 }
 
 async function main() {
+  const { host } = bindProcessToSafeTestDatabase();
+  console.log(`DB_WRITE_TARGET_HOST=${host}`);
+  const BASE = await resolveHttpTestBase();
   const cookie = mintOwnerCookie();
   const sql = neon(process.env.DATABASE_URL);
 

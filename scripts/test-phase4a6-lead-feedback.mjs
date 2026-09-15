@@ -6,8 +6,8 @@
  *   node scripts/test-phase4a6-lead-feedback.mjs
  */
 import { createHmac, createHash } from "node:crypto";
-import nextEnv from "@next/env";
 import { neon } from "@neondatabase/serverless";
+import { bindProcessToSafeTestDatabase } from "./lib/db-write-safety.mjs";
 import { validateLeadAnalysisFeedback } from "../lib/cc/domain/ai-lead-feedback.js";
 import {
   getActiveLeadFeedbackForAnalysis,
@@ -17,10 +17,7 @@ import { insertLeadAnalysis, getLatestLeadAnalysis } from "../lib/cc/db/ai-lead-
 import { getLeadById } from "../lib/cc/db/leads.js";
 import { persistQuoteLead } from "../lib/cc/db/persist-quote-lead.js";
 
-const { loadEnvConfig } = nextEnv;
-loadEnvConfig(process.cwd());
 
-const BASE = process.env.CC_TEST_BASE || "http://127.0.0.1:3000";
 const results = [];
 
 function check(name, cond, detail = "") {
@@ -61,7 +58,8 @@ function sampleAnalysis(overrides = {}) {
 }
 
 async function main() {
-  assert(process.env.DATABASE_URL, "DATABASE_URL required");
+  const { host } = bindProcessToSafeTestDatabase();
+  console.log(`DB_WRITE_TARGET_HOST=${host}`);
   const sql = neon(process.env.DATABASE_URL);
 
   const tables = await sql`
@@ -134,6 +132,7 @@ async function main() {
   const leadId = created.leadId;
   const leadBefore = await getLeadById(leadId);
 
+  const isolationAnchor = new Date().toISOString();
   const [leadsBefore] = await sql`SELECT COUNT(*)::int AS c FROM leads`;
   const [customersBefore] = await sql`SELECT COUNT(*)::int AS c FROM customers`;
   const [notesBefore] = await sql`
@@ -286,7 +285,14 @@ async function main() {
   check("customers_count_unchanged", customersAfter.c === customersBefore.c);
 
   const [playbookAfter] = await sql`SELECT COUNT(*)::int AS c FROM playbook_entries`;
-  check("playbook_unchanged", playbookAfter.c === playbookBefore.c);
+  const [playbookInserted] = await sql`
+    SELECT COUNT(*)::int AS c FROM playbook_entries WHERE created_at >= ${isolationAnchor}
+  `;
+  check(
+    "playbook_unchanged",
+    playbookAfter.c === playbookBefore.c && playbookInserted.c === 0,
+    `before=${playbookBefore.c} after=${playbookAfter.c} inserted=${playbookInserted.c}`
+  );
 
   const [analysesAfter] = await sql`
     SELECT COUNT(*)::int AS c FROM ai_lead_analyses WHERE lead_id = ${leadId}
@@ -312,7 +318,9 @@ async function main() {
   `;
   check("rapid_supersede_one_active", activeFinal.c === 1);
 
-  // --- HTTP: auth + UI markers ---
+  // --- HTTP: auth + UI markers (managed Next on TEST_DATABASE_URL) ---
+  const { resolveHttpTestBase } = await import("./lib/dev-test-server.mjs");
+  const BASE = await resolveHttpTestBase();
   const unauth = await fetch(`${BASE}/command-center/leads/${leadId}`, {
     redirect: "manual",
   });

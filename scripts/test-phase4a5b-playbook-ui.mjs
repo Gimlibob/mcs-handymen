@@ -6,8 +6,8 @@ import { createHmac, randomBytes } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import nextEnv from "@next/env";
 import { neon } from "@neondatabase/serverless";
+import { bindProcessToSafeTestDatabase } from "./lib/db-write-safety.mjs";
 import {
   createPlaybookEntryWithDraft,
   getPlaybookEntryById,
@@ -17,10 +17,6 @@ import {
   updatePlaybookEntryMetadata,
 } from "../lib/cc/db/playbook.js";
 
-const { loadEnvConfig } = nextEnv;
-loadEnvConfig(process.cwd());
-
-const BASE = process.env.CC_TEST_BASE || "http://127.0.0.1:3000";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const results = [];
 
@@ -43,7 +39,8 @@ function mintOwnerCookie() {
 }
 
 async function main() {
-  assert(process.env.DATABASE_URL, "DATABASE_URL required");
+  const { host } = bindProcessToSafeTestDatabase();
+  console.log(`DB_WRITE_TARGET_HOST=${host}`);
   const sql = neon(process.env.DATABASE_URL);
   const cookie = mintOwnerCookie();
   const stamp = `${Date.now()}-${randomBytes(2).toString("hex")}`;
@@ -73,6 +70,7 @@ async function main() {
     /approvePlaybookRevisionAction/.test(actionsSrc) &&
       /retirePlaybookRevisionAction/.test(actionsSrc)
   );
+  const isolationAnchor = new Date().toISOString();
   const [leadsBefore] = await sql`SELECT COUNT(*)::int AS count FROM leads`;
   const [customersBefore] = await sql`SELECT COUNT(*)::int AS count FROM customers`;
   const [aiBefore] = await sql`SELECT COUNT(*)::int AS count FROM ai_lead_analyses`;
@@ -201,25 +199,48 @@ async function main() {
     WHERE id = ${revisionId}
   `;
 
-  // Isolation
+  // Isolation: no CRM/AI inserts during this suite's playbook UI mutations
   const [leadsAfter] = await sql`SELECT COUNT(*)::int AS count FROM leads`;
   const [customersAfter] = await sql`SELECT COUNT(*)::int AS count FROM customers`;
   const [aiAfter] = await sql`SELECT COUNT(*)::int AS count FROM ai_lead_analyses`;
-  check("crm_leads_unchanged", leadsAfter.count === leadsBefore.count);
-  check("crm_customers_unchanged", customersAfter.count === customersBefore.count);
-  check("ai_analyses_unchanged", aiAfter.count === aiBefore.count);
+  const [leadsInserted] = await sql`
+    SELECT COUNT(*)::int AS count FROM leads WHERE created_at >= ${isolationAnchor}
+  `;
+  const [customersInserted] = await sql`
+    SELECT COUNT(*)::int AS count FROM customers WHERE created_at >= ${isolationAnchor}
+  `;
+  const [aiInserted] = await sql`
+    SELECT COUNT(*)::int AS count FROM ai_lead_analyses WHERE created_at >= ${isolationAnchor}
+  `;
+  check(
+    "crm_leads_unchanged",
+    leadsAfter.count === leadsBefore.count && leadsInserted.count === 0,
+    `before=${leadsBefore.count} after=${leadsAfter.count} inserted=${leadsInserted.count}`
+  );
+  check(
+    "crm_customers_unchanged",
+    customersAfter.count === customersBefore.count && customersInserted.count === 0,
+    `before=${customersBefore.count} after=${customersAfter.count} inserted=${customersInserted.count}`
+  );
+  check(
+    "ai_analyses_unchanged",
+    aiAfter.count === aiBefore.count && aiInserted.count === 0,
+    `before=${aiBefore.count} after=${aiAfter.count} inserted=${aiInserted.count}`
+  );
 
-  // HTTP auth + UI
+  // HTTP auth + UI against managed Next bound to TEST_DATABASE_URL
+  const { resolveHttpTestBase } = await import("./lib/dev-test-server.mjs");
+  const BASE = await resolveHttpTestBase();
   let httpOk = false;
   try {
-    const probe = await fetch(`${BASE}/`, { signal: AbortSignal.timeout(2000) });
-    httpOk = probe.ok;
+    const probe = await fetch(`${BASE}/`, { signal: AbortSignal.timeout(5000) });
+    httpOk = probe.ok || probe.status > 0;
   } catch {
     httpOk = false;
   }
 
   if (!httpOk) {
-    check("http_skipped_no_server", true, `start server at ${BASE}`);
+    check("http_skipped_no_server", false, `managed server missing at ${BASE}`);
   } else {
     for (const path of [
       "/command-center/playbook",

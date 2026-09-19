@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { get } from "@vercel/blob";
-import { getOwnerSession } from "@/lib/cc/auth/session";
+import { getOptionalOwner } from "@/lib/cc/auth/dal";
 import { getLeadPhotoById } from "@/lib/cc/db/leads";
 import { QUOTE_BLOB_PREFIX } from "@/lib/quote-limits";
 
@@ -9,9 +9,10 @@ export const runtime = "nodejs";
 /**
  * Owner-only private photo stream for Command Center.
  * Does not create a public URL; requires authenticated session.
+ * Uses getOptionalOwner so password_version invalidation matches requireOwner.
  */
 export async function GET(_request, context) {
-  const session = await getOwnerSession();
+  const session = await getOptionalOwner();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { CC_SESSION_COOKIE } from "@/lib/cc/auth/constants";
-import { decodeSessionToken } from "@/lib/cc/auth/session";
+import { decodeSessionToken } from "@/lib/cc/auth/session-token";
 
 /**
  * Optimistic auth gate for Command Center only.

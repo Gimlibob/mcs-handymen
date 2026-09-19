@@ -156,23 +156,15 @@ export async function ensureDevTestHttpBase() {
         MCS_CC_TEST_SERVER_HOST: host,
         PORT: String(port),
       },
-      stdio: ["ignore", "pipe", "pipe"],
+      // ignore stdio so Windows parent test processes can exit (piped
+      // stdout/stderr keep the parent alive even after child.unref()).
+      stdio: "ignore",
       windowsHide: true,
       detached: process.platform !== "win32",
     }
   );
 
-  if (process.platform !== "win32") {
-    child.unref();
-  }
-  let bootLog = "";
-  const onChunk = (buf) => {
-    const text = buf.toString("utf8");
-    bootLog += text;
-    if (bootLog.length > 8000) bootLog = bootLog.slice(-4000);
-  };
-  child.stdout?.on("data", onChunk);
-  child.stderr?.on("data", onChunk);
+  child.unref();
 
   try {
     await waitForHttp(baseUrl);
@@ -184,7 +176,7 @@ export async function ensureDevTestHttpBase() {
     }
     clearMarker();
     throw new Error(
-      `${error instanceof Error ? error.message : error}\n--- boot log ---\n${bootLog}`
+      `${error instanceof Error ? error.message : error}\n(boot log unavailable with stdio ignore)`
     );
   }
 

@@ -45,6 +45,15 @@ export default function LoginForm() {
         />
       </div>
 
+      <p className="text-right text-sm">
+        <a
+          href="/forgot-password"
+          className="font-medium text-gold-bright underline underline-offset-2"
+        >
+          Forgot password?
+        </a>
+      </p>
+
       <button
         type="submit"
         disabled={pending}

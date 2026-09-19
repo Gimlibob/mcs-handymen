@@ -5,7 +5,6 @@
  * Usage:
  *   node scripts/test-phase4a5c-playbook-approve-retrieval.mjs
  */
-import { createHmac } from "node:crypto";
 import { neon } from "@neondatabase/serverless";
 import { bindProcessToSafeTestDatabase } from "./lib/db-write-safety.mjs";
 import { LEAD_AGENT_PROMPT_VERSION } from "../lib/cc/ai/config.js";
@@ -28,6 +27,7 @@ import {
 import { getLeadById } from "../lib/cc/db/leads.js";
 import { persistQuoteLead } from "../lib/cc/db/persist-quote-lead.js";
 import { resolveHttpTestBase } from "./lib/dev-test-server.mjs";
+import { mintOwnerTestCookie } from "./lib/mint-owner-test-cookie.mjs";
 
 const results = [];
 
@@ -40,14 +40,6 @@ function assert(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-function mintOwnerCookie() {
-  const secret = process.env.CC_SESSION_SECRET?.trim();
-  assert(secret && secret.length >= 32, "CC_SESSION_SECRET missing");
-  const payload = { role: "owner", exp: Date.now() + 60 * 60 * 1000 };
-  const body = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
-  const signature = createHmac("sha256", secret).update(body).digest("base64url");
-  return `mcs_cc_session=${body}.${signature}`;
-}
 
 async function main() {
   const { host } = bindProcessToSafeTestDatabase();
@@ -439,7 +431,7 @@ async function main() {
     sensitivity: "operational",
     validationState: "validated",
   });
-  const cookie = mintOwnerCookie();
+  const cookie = await mintOwnerTestCookie();
   const detail = await fetch(`${BASE}/command-center/playbook/${entryId}`, {
     headers: { cookie },
   });

@@ -2,12 +2,13 @@
 /**
  * Phase 4A.5.b — Playbook owner UI (draft-only) acceptance tests.
  */
-import { createHmac, randomBytes } from "node:crypto";
+import { randomBytes } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { neon } from "@neondatabase/serverless";
 import { bindProcessToSafeTestDatabase } from "./lib/db-write-safety.mjs";
+import { mintOwnerTestCookie } from "./lib/mint-owner-test-cookie.mjs";
 import {
   createPlaybookEntryWithDraft,
   getPlaybookEntryById,
@@ -29,20 +30,12 @@ function assert(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-function mintOwnerCookie() {
-  const secret = process.env.CC_SESSION_SECRET?.trim();
-  assert(secret && secret.length >= 32, "CC_SESSION_SECRET missing");
-  const payload = { role: "owner", exp: Date.now() + 60 * 60 * 1000 };
-  const body = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
-  const signature = createHmac("sha256", secret).update(body).digest("base64url");
-  return `mcs_cc_session=${body}.${signature}`;
-}
 
 async function main() {
   const { host } = bindProcessToSafeTestDatabase();
   console.log(`DB_WRITE_TARGET_HOST=${host}`);
   const sql = neon(process.env.DATABASE_URL);
-  const cookie = mintOwnerCookie();
+  const cookie = await mintOwnerTestCookie();
   const stamp = `${Date.now()}-${randomBytes(2).toString("hex")}`;
 
   // Guardrails: draft UI remains; Approve/Retire live in 4A.5.c forms/actions.

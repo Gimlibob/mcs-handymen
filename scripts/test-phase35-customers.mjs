@@ -2,7 +2,7 @@
 /**
  * Phase 3.5 Customer Profile acceptance tests.
  */
-import { createHmac, randomBytes } from "node:crypto";
+import { randomBytes } from "node:crypto";
 import { neon } from "@neondatabase/serverless";
 import { bindProcessToSafeTestDatabase } from "./lib/db-write-safety.mjs";
 import { normalizeCustomerEmail, getCustomerRecurrence } from "../lib/cc/domain/customer-match.js";
@@ -19,6 +19,7 @@ import {
 } from "../lib/cc/db/customers.js";
 import { persistQuoteLead } from "../lib/cc/db/persist-quote-lead.js";
 import { resolveHttpTestBase } from "./lib/dev-test-server.mjs";
+import { mintOwnerTestCookie } from "./lib/mint-owner-test-cookie.mjs";
 
 const results = [];
 
@@ -31,14 +32,6 @@ function assert(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-function mintOwnerCookie() {
-  const secret = process.env.CC_SESSION_SECRET?.trim();
-  assert(secret && secret.length >= 32, "CC_SESSION_SECRET missing");
-  const payload = { role: "owner", exp: Date.now() + 60 * 60 * 1000 };
-  const body = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
-  const signature = createHmac("sha256", secret).update(body).digest("base64url");
-  return `mcs_cc_session=${body}.${signature}`;
-}
 
 function sampleLead(overrides = {}) {
   const stamp = `${Date.now()}-${randomBytes(3).toString("hex")}`;
@@ -67,7 +60,7 @@ async function main() {
   console.log(`DB_WRITE_TARGET_HOST=${host}`);
   const BASE = await resolveHttpTestBase();
   const sql = neon(process.env.DATABASE_URL);
-  const cookie = mintOwnerCookie();
+  const cookie = await mintOwnerTestCookie();
 
   // Domain
   check(

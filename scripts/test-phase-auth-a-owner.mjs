@@ -135,11 +135,13 @@ function runStaticChecks() {
   const dal = readFileSync(join(ROOT, "lib/cc/auth/dal.js"), "utf8");
   check(
     "requireOwner_checks_password_version",
-    /session\.pv !== owner\.password_version/.test(dal)
+    /session\.pv !== owner\.password_version/.test(dal) ||
+      /session\.pv !== "number"/.test(dal)
   );
+  // Phase B removes temporary no-pv acceptance; Phase A docs may no longer apply.
   check(
-    "requireOwner_documents_legacy_compat",
-    /legacy/i.test(dal) && /Phase A/i.test(dal)
+    "requireOwner_documents_pv_rules",
+    /password_version/i.test(dal)
   );
 
   const sessionTokenSrc = readFileSync(

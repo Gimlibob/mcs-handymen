@@ -8,7 +8,7 @@
  * Live OpenAI call is optional — set OPENAI_API_KEY to enable.
  * Default path uses an injected mock completer (no network).
  */
-import { createHash, createHmac, randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { neon } from "@neondatabase/serverless";
 import { bindProcessToSafeTestDatabase } from "./lib/db-write-safety.mjs";
 import { validateLeadAnalysis, checkLeadAnalysisCoherence } from "../lib/cc/ai/lead-agent/schema.js";
@@ -25,6 +25,7 @@ import {
 import { getLeadById, getLeadNotes } from "../lib/cc/db/leads.js";
 import { persistQuoteLead } from "../lib/cc/db/persist-quote-lead.js";
 import { resolveHttpTestBase } from "./lib/dev-test-server.mjs";
+import { mintOwnerTestCookie } from "./lib/mint-owner-test-cookie.mjs";
 
 const results = [];
 
@@ -37,14 +38,6 @@ function assert(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-function mintOwnerCookie() {
-  const secret = process.env.CC_SESSION_SECRET?.trim();
-  assert(secret && secret.length >= 32, "CC_SESSION_SECRET missing");
-  const payload = { role: "owner", exp: Date.now() + 60 * 60 * 1000 };
-  const body = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
-  const signature = createHmac("sha256", secret).update(body).digest("base64url");
-  return `mcs_cc_session=${body}.${signature}`;
-}
 
 function sampleAnalysis(overrides = {}) {
   return {
@@ -435,7 +428,7 @@ async function main() {
 
   // --- HTTP UI checks (managed Next on TEST_DATABASE_URL) ---
   const BASE = await resolveHttpTestBase();
-  const cookie = mintOwnerCookie();
+  const cookie = await mintOwnerTestCookie();
   const page = await fetch(`${BASE}/command-center/leads/${leadId}`, {
     headers: { cookie },
   });

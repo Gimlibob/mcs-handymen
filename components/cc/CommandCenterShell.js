@@ -76,6 +76,17 @@ export default function CommandCenterShell({
                   </Link>
                 );
               })}
+              <Link
+                href="/command-center/account"
+                className={`rounded-lg px-3.5 py-2 text-sm font-medium transition-colors ${
+                  pathname === "/command-center/account" ||
+                  pathname.startsWith("/command-center/account/")
+                    ? "border border-gold-dim/50 bg-surface-2 text-gold-bright"
+                    : "text-muted hover:bg-surface-2 hover:text-foreground"
+                }`}
+              >
+                Account
+              </Link>
               <form action={logoutAction} className="ml-1">
                 <button
                   type="submit"

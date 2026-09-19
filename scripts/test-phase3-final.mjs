@@ -2,10 +2,10 @@
 /**
  * Phase 3 final acceptance checks (HTTP + domain).
  */
-import { createHmac } from "node:crypto";
 import { neon } from "@neondatabase/serverless";
 import { bindProcessToSafeTestDatabase } from "./lib/db-write-safety.mjs";
 import { resolveHttpTestBase } from "./lib/dev-test-server.mjs";
+import { mintOwnerTestCookie } from "./lib/mint-owner-test-cookie.mjs";
 import { getNextAction } from "../lib/cc/domain/lead-status.js";
 
 const results = [];
@@ -19,20 +19,11 @@ function check(name, cond, detail = "") {
   console.log(`${cond ? "PASS" : "FAIL"} — ${name}${detail ? ` (${detail})` : ""}`);
 }
 
-function mintOwnerCookie() {
-  const secret = process.env.CC_SESSION_SECRET?.trim();
-  assert(secret && secret.length >= 32, "CC_SESSION_SECRET missing");
-  const payload = { role: "owner", exp: Date.now() + 60 * 60 * 1000 };
-  const body = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
-  const signature = createHmac("sha256", secret).update(body).digest("base64url");
-  return `mcs_cc_session=${body}.${signature}`;
-}
-
 async function main() {
   const { host } = bindProcessToSafeTestDatabase();
   console.log(`DB_WRITE_TARGET_HOST=${host}`);
   const BASE = await resolveHttpTestBase();
-  const cookie = mintOwnerCookie();
+  const cookie = await mintOwnerTestCookie();
   const sql = neon(process.env.DATABASE_URL);
 
   // Public site

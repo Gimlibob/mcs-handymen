@@ -5,29 +5,16 @@
  * Uses TEST_DATABASE_URL for SQL and a managed Next process bound to the same DB.
  * Does not fall back to Production .env.local DATABASE_URL.
  */
-import { createHmac } from "node:crypto";
 import { neon } from "@neondatabase/serverless";
 import { list } from "@vercel/blob";
 import { bindProcessToSafeTestDatabase } from "./lib/db-write-safety.mjs";
 import { resolveHttpTestBase } from "./lib/dev-test-server.mjs";
-
-const COOKIE = "mcs_cc_session";
+import { mintOwnerTestCookie } from "./lib/mint-owner-test-cookie.mjs";
 
 function assert(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-function mintOwnerCookie() {
-  const secret = process.env.CC_SESSION_SECRET?.trim();
-  assert(secret && secret.length >= 32, "CC_SESSION_SECRET missing");
-  const payload = {
-    role: "owner",
-    exp: Date.now() + 60 * 60 * 1000,
-  };
-  const body = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
-  const signature = createHmac("sha256", secret).update(body).digest("base64url");
-  return `${COOKIE}=${body}.${signature}`;
-}
 
 async function main() {
   const { host } = bindProcessToSafeTestDatabase();
@@ -70,7 +57,7 @@ async function main() {
   assert(unauth.status === 401, `expected 401 unauth photo, got ${unauth.status}`);
   console.log("PASS — unauth photo 401");
 
-  const cookie = mintOwnerCookie();
+  const cookie = await mintOwnerTestCookie();
   const authPhoto = await fetch(`${BASE}/api/cc/lead-photos/${photo.id}`, {
     headers: { cookie },
   });

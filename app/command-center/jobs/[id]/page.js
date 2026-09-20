@@ -3,10 +3,12 @@ import { notFound } from "next/navigation";
 import { requireOwner } from "@/lib/cc/auth/dal";
 import CommandCenterShell from "@/components/cc/CommandCenterShell";
 import { JobAssignmentForm, JobScheduleForm, JobStatusChangeForm } from "@/components/cc/JobActions";
+import JobGoogleCalendarStatus from "@/components/cc/JobGoogleCalendarStatus";
 import { getCustomerById } from "@/lib/cc/db/customers";
 import { getJobById } from "@/lib/cc/db/jobs";
 import { getLeadById, getLeadPhotos } from "@/lib/cc/db/leads";
 import { getWorkerById, listWorkers } from "@/lib/cc/db/workers";
+import { getConnectedGoogleCalendar } from "@/lib/cc/db/google-calendar-connections";
 import {
   canRescheduleJob,
   canScheduleJob,
@@ -80,7 +82,8 @@ export default async function JobDetailPage({ params }) {
 
   if (!job) notFound();
 
-  const [lead, customer, photos, assignee, activeWorkers] = await Promise.all([
+  const [lead, customer, photos, assignee, activeWorkers, googleConnected] =
+    await Promise.all([
     getLeadById(job.lead_id),
     getCustomerById(job.customer_id),
     getLeadPhotos(job.lead_id).catch(() => []),
@@ -88,6 +91,7 @@ export default async function JobDetailPage({ params }) {
       ? getWorkerById(job.assigned_worker_id).catch(() => null)
       : Promise.resolve(null),
     listWorkers({ status: "active", limit: 200 }).catch(() => []),
+    getConnectedGoogleCalendar().catch(() => null),
   ]);
 
   const allowedNext = getAllowedNextJobStatusesForStatusForm(job.status);
@@ -195,6 +199,15 @@ export default async function JobDetailPage({ params }) {
                 scheduledDate={job.scheduled_date || null}
                 scheduledWindow={job.scheduled_window || null}
                 mode={scheduleMode}
+              />
+            </Panel>
+
+            <Panel title="Google Calendar" compact>
+              <JobGoogleCalendarStatus
+                jobId={job.id}
+                connected={Boolean(googleConnected)}
+                syncStatus={job.google_sync_status || null}
+                syncError={job.google_sync_error || null}
               />
             </Panel>
 

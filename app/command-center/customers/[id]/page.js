@@ -21,6 +21,11 @@ import {
   summarizeCustomerJobs,
   truncateScopeSummary,
 } from "@/lib/cc/domain/customer-jobs";
+import { formatCalendarDate } from "@/lib/cc/domain/chicago-date";
+import {
+  isLegacyNeedsDate,
+  scheduleWindowLabel,
+} from "@/lib/cc/domain/job-scheduling";
 import {
   customerRecurrenceLabel,
   getCustomerRecurrence,
@@ -80,6 +85,7 @@ function JobRows({ jobs, emptyLabel, showCompleted }) {
     <ul className="divide-y divide-border-soft">
       {jobs.map((job) => {
         const dateValue = jobDisplayDate(job);
+        const hasScheduleDate = Boolean(job.scheduled_date);
         const worker =
           typeof job.assigned_worker_name === "string" && job.assigned_worker_name.trim()
             ? job.assigned_worker_name.trim()
@@ -97,7 +103,11 @@ function JobRows({ jobs, emptyLabel, showCompleted }) {
                 {job.service_type}
               </Link>
               <p className="mt-0.5 text-xs text-muted">
-                {formatDate(dateValue)}
+                {hasScheduleDate
+                  ? `${formatCalendarDate(job.scheduled_date)} · ${scheduleWindowLabel(job.scheduled_window)}`
+                  : isLegacyNeedsDate(job)
+                    ? "Needs date"
+                    : "Unscheduled"}
                 <span className="mx-1.5 text-border-soft">·</span>
                 {job.service_city || "—"}
                 <span className="mx-1.5 text-border-soft">·</span>

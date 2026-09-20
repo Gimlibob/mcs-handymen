@@ -4,8 +4,13 @@ import DashboardStatusTiles from "@/components/cc/DashboardStatusTiles";
 import DashboardSideRail from "@/components/cc/DashboardSideRail";
 import NeedsAttentionList from "@/components/cc/NeedsAttentionList";
 import PipelineStrip from "@/components/cc/PipelineStrip";
+import { getSchedulingDashboardCounts } from "@/lib/cc/db/jobs";
 import { getLeadStatusCounts, listLeadsForAttention } from "@/lib/cc/db/leads";
 import { buildNeedsAttention } from "@/lib/cc/domain/needs-attention";
+import {
+  addCalendarDays,
+  chicagoToday,
+} from "@/lib/cc/domain/chicago-date";
 import Link from "next/link";
 import { ArrowRight, Search } from "lucide-react";
 
@@ -28,13 +33,17 @@ export default async function CommandCenterPage() {
 
   let counts = {};
   let attentionItems = [];
+  let scheduleCounts = { needsScheduling: 0, jobsToday: 0, jobsTomorrow: 0 };
   let dbError = null;
   const loadedAt = new Date();
+  const today = chicagoToday(loadedAt);
+  const tomorrow = addCalendarDays(today, 1);
 
   try {
     counts = await getLeadStatusCounts();
     const openLeads = await listLeadsForAttention();
     attentionItems = buildNeedsAttention(openLeads);
+    scheduleCounts = await getSchedulingDashboardCounts({ today, tomorrow });
   } catch (error) {
     console.error("[cc/dashboard] load failed");
     dbError = "Could not load pipeline data. Check DATABASE_URL and migrations.";
@@ -110,6 +119,45 @@ export default async function CommandCenterPage() {
           <>
             <section aria-label="Status KPIs" className="shrink-0">
               <DashboardStatusTiles counts={counts} />
+            </section>
+
+            <section
+              aria-label="Scheduling KPIs"
+              className="grid shrink-0 grid-cols-1 gap-3 sm:grid-cols-3"
+            >
+              <Link
+                href="/command-center/calendar"
+                className="rounded-2xl border border-border-soft bg-surface px-4 py-3 hover:border-gold"
+              >
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
+                  Needs Scheduling
+                </p>
+                <p className="mt-1 font-heading text-2xl font-semibold tabular-nums text-foreground">
+                  {scheduleCounts.needsScheduling}
+                </p>
+              </Link>
+              <Link
+                href="/command-center/calendar"
+                className="rounded-2xl border border-border-soft bg-surface px-4 py-3 hover:border-gold"
+              >
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
+                  Jobs Today
+                </p>
+                <p className="mt-1 font-heading text-2xl font-semibold tabular-nums text-foreground">
+                  {scheduleCounts.jobsToday}
+                </p>
+              </Link>
+              <Link
+                href="/command-center/calendar"
+                className="rounded-2xl border border-border-soft bg-surface px-4 py-3 hover:border-gold"
+              >
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
+                  Jobs Tomorrow
+                </p>
+                <p className="mt-1 font-heading text-2xl font-semibold tabular-nums text-foreground">
+                  {scheduleCounts.jobsTomorrow}
+                </p>
+              </Link>
             </section>
 
             <section aria-label="Pipeline" className="shrink-0">

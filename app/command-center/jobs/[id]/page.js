@@ -2,15 +2,19 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireOwner } from "@/lib/cc/auth/dal";
 import CommandCenterShell from "@/components/cc/CommandCenterShell";
-import { JobAssignmentForm, JobStatusChangeForm } from "@/components/cc/JobActions";
+import { JobAssignmentForm, JobScheduleForm, JobStatusChangeForm } from "@/components/cc/JobActions";
 import { getCustomerById } from "@/lib/cc/db/customers";
 import { getJobById } from "@/lib/cc/db/jobs";
 import { getLeadById, getLeadPhotos } from "@/lib/cc/db/leads";
 import { getWorkerById, listWorkers } from "@/lib/cc/db/workers";
 import {
-  getAllowedNextJobStatuses,
-  jobStatusLabel,
-} from "@/lib/cc/domain/job-status";
+  canRescheduleJob,
+  canScheduleJob,
+  canSetScheduleDate,
+  getAllowedNextJobStatusesForStatusForm,
+  isScheduleReadOnly,
+} from "@/lib/cc/domain/job-scheduling";
+import { jobStatusLabel } from "@/lib/cc/domain/job-status";
 import { statusLabel } from "@/lib/cc/domain/lead-status";
 
 export const dynamic = "force-dynamic";
@@ -86,7 +90,13 @@ export default async function JobDetailPage({ params }) {
     listWorkers({ status: "active", limit: 200 }).catch(() => []),
   ]);
 
-  const allowedNext = getAllowedNextJobStatuses(job.status);
+  const allowedNext = getAllowedNextJobStatusesForStatusForm(job.status);
+
+  let scheduleMode = "readonly";
+  if (canScheduleJob(job)) scheduleMode = "schedule";
+  else if (canSetScheduleDate(job)) scheduleMode = "set_date";
+  else if (canRescheduleJob(job)) scheduleMode = "reschedule";
+  else if (isScheduleReadOnly(job) || job.status === "authorized") scheduleMode = "readonly";
 
   return (
     <CommandCenterShell pathname={`/command-center/jobs/${job.id}`}>
@@ -175,6 +185,16 @@ export default async function JobDetailPage({ params }) {
                 assignedDisplayName={assignee?.display_name || null}
                 assignedIsInactive={assignee?.status === "inactive"}
                 activeWorkers={activeWorkers}
+              />
+            </Panel>
+
+            <Panel title="Schedule" compact>
+              <JobScheduleForm
+                jobId={job.id}
+                status={job.status}
+                scheduledDate={job.scheduled_date || null}
+                scheduledWindow={job.scheduled_window || null}
+                mode={scheduleMode}
               />
             </Panel>
 

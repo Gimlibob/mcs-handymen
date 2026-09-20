@@ -6,9 +6,17 @@ import { useState, useTransition } from "react";
 import {
   changeJobStatusAction,
   createJobFromLeadAction,
+  rescheduleJobAction,
+  scheduleJobAction,
   setJobAssignedWorkerAction,
+  unscheduleJobAction,
 } from "@/lib/cc/actions/jobs";
 import { jobStatusLabel } from "@/lib/cc/domain/job-status";
+import {
+  SCHEDULE_WINDOWS,
+  scheduleWindowLabel,
+} from "@/lib/cc/domain/job-scheduling";
+import { formatCalendarDate } from "@/lib/cc/domain/chicago-date";
 
 /**
  * Lead Detail — create Job or open existing active Job.
@@ -258,6 +266,163 @@ export function JobAssignmentForm({
           className="inline-flex w-fit rounded-lg border border-border-soft px-4 py-2.5 text-sm font-medium text-muted hover:border-gold hover:text-gold-bright disabled:opacity-60"
         >
           {pending ? "Saving…" : "Unassign"}
+        </button>
+      ) : null}
+
+      {error ? (
+        <p role="alert" className="text-sm text-red-300">
+          {error}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * Job Detail — schedule / set date / reschedule / unschedule.
+ */
+export function JobScheduleForm({
+  jobId,
+  status,
+  scheduledDate = null,
+  scheduledWindow = null,
+  mode = "schedule",
+}) {
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState(null);
+  const [date, setDate] = useState(scheduledDate || "");
+  const [windowVal, setWindowVal] = useState(scheduledWindow || "flex");
+
+  if (mode === "readonly") {
+    return (
+      <div className="flex flex-col gap-2 text-sm">
+        <div>
+          <p className="text-xs text-muted">Scheduled date</p>
+          <p className="mt-0.5 text-foreground">{formatCalendarDate(scheduledDate)}</p>
+        </div>
+        <div>
+          <p className="text-xs text-muted">Window</p>
+          <p className="mt-0.5 text-foreground">{scheduleWindowLabel(scheduledWindow)}</p>
+        </div>
+        <p className="text-xs text-muted">
+          Schedule is read-only while Job is {jobStatusLabel(status)}.
+        </p>
+      </div>
+    );
+  }
+
+  function reload() {
+    window.location.assign(`/command-center/jobs/${jobId}`);
+  }
+
+  function onSubmit(e) {
+    e.preventDefault();
+    setError(null);
+    startTransition(async () => {
+      const action =
+        mode === "reschedule" ? rescheduleJobAction : scheduleJobAction;
+      const result = await action(jobId, date, windowVal);
+      if (!result?.ok) {
+        const map = {
+          invalid_date: "Enter a valid date.",
+          invalid_window: "Choose AM, PM, or Flex.",
+          schedule_read_only: "Schedule cannot be edited in this status.",
+          not_schedulable: "This Job cannot be scheduled right now.",
+          not_reschedulable: "This Job cannot be rescheduled.",
+        };
+        setError(map[result?.error] || "Could not save schedule.");
+        return;
+      }
+      reload();
+    });
+  }
+
+  function onUnschedule() {
+    setError(null);
+    startTransition(async () => {
+      const result = await unscheduleJobAction(jobId);
+      if (!result?.ok) {
+        setError("Could not unschedule Job.");
+        return;
+      }
+      reload();
+    });
+  }
+
+  const title =
+    mode === "reschedule"
+      ? "Reschedule"
+      : mode === "set_date"
+        ? "Set date"
+        : "Schedule Job";
+
+  return (
+    <div className="flex flex-col gap-3">
+      {!scheduledDate && status === "scheduled" ? (
+        <p className="rounded-lg border border-amber-500/40 bg-amber-950/20 px-3 py-2 text-xs text-amber-100">
+          Needs date — status is Scheduled but no calendar date is set yet.
+        </p>
+      ) : null}
+
+      <dl className="grid grid-cols-2 gap-3 text-sm">
+        <div>
+          <dt className="text-xs text-muted">Current date</dt>
+          <dd className="text-foreground">{formatCalendarDate(scheduledDate)}</dd>
+        </div>
+        <div>
+          <dt className="text-xs text-muted">Current window</dt>
+          <dd className="text-foreground">{scheduleWindowLabel(scheduledWindow)}</dd>
+        </div>
+      </dl>
+
+      <form onSubmit={onSubmit} className="flex flex-col gap-3">
+        <div>
+          <label htmlFor="sched-date" className="mb-1.5 block text-xs font-medium text-muted">
+            Date
+          </label>
+          <input
+            id="sched-date"
+            type="date"
+            required
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="w-full rounded-lg border border-border-soft bg-surface-2 px-3 py-2.5 text-sm text-foreground"
+          />
+        </div>
+        <div>
+          <label htmlFor="sched-window" className="mb-1.5 block text-xs font-medium text-muted">
+            Window
+          </label>
+          <select
+            id="sched-window"
+            value={windowVal}
+            onChange={(e) => setWindowVal(e.target.value)}
+            className="w-full rounded-lg border border-border-soft bg-surface-2 px-3 py-2.5 text-sm text-foreground"
+          >
+            {SCHEDULE_WINDOWS.map((w) => (
+              <option key={w} value={w}>
+                {scheduleWindowLabel(w)}
+              </option>
+            ))}
+          </select>
+        </div>
+        <button
+          type="submit"
+          disabled={pending || !date}
+          className="inline-flex w-fit rounded-lg bg-gold px-4 py-2.5 text-sm font-semibold text-black hover:bg-gold-bright disabled:opacity-60"
+        >
+          {pending ? "Saving…" : title}
+        </button>
+      </form>
+
+      {mode === "reschedule" ? (
+        <button
+          type="button"
+          onClick={onUnschedule}
+          disabled={pending}
+          className="inline-flex w-fit rounded-lg border border-border-soft px-4 py-2.5 text-sm font-medium text-muted hover:border-gold hover:text-gold-bright disabled:opacity-60"
+        >
+          {pending ? "Saving…" : "Unschedule"}
         </button>
       ) : null}
 

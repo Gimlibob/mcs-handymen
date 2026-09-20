@@ -20,6 +20,7 @@ import { persistQuoteLead } from "../lib/cc/db/persist-quote-lead.js";
 import {
   createJobFromLead,
   getJobById,
+  scheduleJob,
   setJobAssignedWorker,
   updateJobStatus,
 } from "../lib/cc/db/jobs.js";
@@ -40,13 +41,12 @@ import {
   evaluateWriteEligibility,
   loadLocalEnv,
 } from "./lib/db-write-safety.mjs";
+import { resolveHttpTestBase } from "./lib/dev-test-server.mjs";
 
 loadLocalEnv();
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
-
-const BASE = (process.env.BASE_URL || "http://127.0.0.1:3000").replace(/\/$/, "");
 
 let failed = 0;
 let dbWriteSkipped = false;
@@ -235,7 +235,8 @@ function runStaticChecks() {
 async function runAuthRedirectCheck() {
   console.log("\n=== Owner auth (HTTP redirect, no DB write) ===");
   try {
-    const res = await fetch(`${BASE}/command-center/workers`, {
+    const base = await resolveHttpTestBase();
+    const res = await fetch(`${base}/command-center/workers`, {
       redirect: "manual",
     });
     check(
@@ -406,9 +407,13 @@ async function runDbWriteSuite(sql) {
     inactiveAssignee?.status || "missing"
   );
 
-  // Status change must not clear assignment
+  // Status change must not clear assignment (schedule via schedule action)
   const statusBefore = jobWithInactive.status;
-  const toScheduled = await updateJobStatus({ jobId, nextStatus: "scheduled" });
+  const toScheduled = await scheduleJob({
+    jobId,
+    scheduledDate: "2026-09-26",
+    scheduledWindow: "am",
+  });
   check("job_status_change_ok", toScheduled.ok === true, toScheduled.error || "");
   check(
     "job_status_change_preserves_assignment",

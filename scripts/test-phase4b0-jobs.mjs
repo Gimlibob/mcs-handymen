@@ -17,6 +17,7 @@ import {
   createJobFromLead,
   getActiveJobForLead,
   getJobById,
+  scheduleJob,
   updateJobStatus,
 } from "../lib/cc/db/jobs.js";
 import { getLeadById, updateLeadStatus } from "../lib/cc/db/leads.js";
@@ -28,11 +29,10 @@ import {
 } from "../lib/cc/domain/job-status.js";
 import { canTransitionLeadStatus } from "../lib/cc/domain/lead-status.js";
 import { bindProcessToSafeTestDatabase } from "./lib/db-write-safety.mjs";
+import { resolveHttpTestBase } from "./lib/dev-test-server.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
-
-const BASE = (process.env.BASE_URL || "http://127.0.0.1:3000").replace(/\/$/, "");
 
 let failed = 0;
 
@@ -303,7 +303,11 @@ async function main() {
     badJump.ok === false && badJump.error === "invalid_transition"
   );
 
-  const toScheduled = await updateJobStatus({ jobId, nextStatus: "scheduled" });
+  const toScheduled = await scheduleJob({
+    jobId,
+    scheduledDate: "2026-09-25",
+    scheduledWindow: "flex",
+  });
   check("transition_to_scheduled", toScheduled.ok === true && toScheduled.job.status === "scheduled");
 
   const leadDuringJobStatus = await getLeadById(leadId);
@@ -405,7 +409,8 @@ async function main() {
 
   // Auth: Job Detail redirects when unauthenticated
   try {
-    const unauth = await fetch(`${BASE}/command-center/jobs/${jobId}`, {
+    const base = await resolveHttpTestBase();
+    const unauth = await fetch(`${base}/command-center/jobs/${jobId}`, {
       redirect: "manual",
     });
     const loc = unauth.headers.get("location") || "";

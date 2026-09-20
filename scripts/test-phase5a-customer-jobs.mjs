@@ -19,6 +19,7 @@ import { persistQuoteLead } from "../lib/cc/db/persist-quote-lead.js";
 import {
   createJobFromLead,
   listJobsForCustomer,
+  scheduleJob,
   setJobAssignedWorker,
   updateJobStatus,
 } from "../lib/cc/db/jobs.js";
@@ -182,8 +183,16 @@ async function main() {
   });
   assert(assigned.ok, "assign worker");
 
-  // Complete job B: authorized → scheduled → in_progress → completed
-  assert((await updateJobStatus({ jobId: jobB.job.id, nextStatus: "scheduled" })).ok);
+  // Complete job B: schedule then in_progress → completed
+  assert(
+    (
+      await scheduleJob({
+        jobId: jobB.job.id,
+        scheduledDate: "2026-09-20",
+        scheduledWindow: "am",
+      })
+    ).ok
+  );
   assert((await updateJobStatus({ jobId: jobB.job.id, nextStatus: "in_progress" })).ok);
   assert((await updateJobStatus({ jobId: jobB.job.id, nextStatus: "completed" })).ok);
 
@@ -224,10 +233,14 @@ async function main() {
 
   const completed = allJobs.find((j) => j.id === jobB.job.id);
   check("completed_at_set", Boolean(completed?.completed_at));
+  // Phase 5B: scheduled_date wins when present (including completed Jobs).
   check(
-    "display_date_completed_uses_completed_at",
-    jobDisplayDate(completed) === completed.completed_at ||
-      new Date(jobDisplayDate(completed)).getTime() === new Date(completed.completed_at).getTime()
+    "display_date_completed_prefers_scheduled_date",
+    completed?.scheduled_date
+      ? jobDisplayDate(completed) === completed.scheduled_date
+      : jobDisplayDate(completed) === completed.completed_at ||
+          new Date(jobDisplayDate(completed)).getTime() ===
+            new Date(completed.completed_at).getTime()
   );
 
   // Merged / invalid customer: list returns empty for unknown id

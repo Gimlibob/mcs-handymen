@@ -13,12 +13,21 @@ import {
   getCustomerTimeline,
   listCustomerLeads,
 } from "@/lib/cc/db/customers";
+import { listJobsForCustomer } from "@/lib/cc/db/jobs";
+import {
+  customerJobHistoryLabel,
+  jobDisplayDate,
+  partitionCustomerJobs,
+  summarizeCustomerJobs,
+  truncateScopeSummary,
+} from "@/lib/cc/domain/customer-jobs";
 import {
   customerRecurrenceLabel,
   getCustomerRecurrence,
 } from "@/lib/cc/domain/customer-match";
 import { customerTagLabel } from "@/lib/cc/domain/customer-tags";
 import { getNextAction, statusLabel } from "@/lib/cc/domain/lead-status";
+import { jobStatusLabel } from "@/lib/cc/domain/job-status";
 import { getStatusBadgeTone } from "@/lib/cc/ui/status-tone";
 
 export const dynamic = "force-dynamic";
@@ -62,6 +71,59 @@ function Panel({ title, children, className = "", compact = false }) {
   );
 }
 
+function JobRows({ jobs, emptyLabel, showCompleted }) {
+  if (jobs.length === 0) {
+    return <p className="text-sm text-muted">{emptyLabel}</p>;
+  }
+
+  return (
+    <ul className="divide-y divide-border-soft">
+      {jobs.map((job) => {
+        const dateValue = jobDisplayDate(job);
+        const worker =
+          typeof job.assigned_worker_name === "string" && job.assigned_worker_name.trim()
+            ? job.assigned_worker_name.trim()
+            : "Unassigned";
+        return (
+          <li
+            key={job.id}
+            className="flex flex-col gap-1.5 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-start sm:justify-between"
+          >
+            <div className="min-w-0">
+              <Link
+                href={`/command-center/jobs/${job.id}`}
+                className="font-medium text-gold-bright hover:underline"
+              >
+                {job.service_type}
+              </Link>
+              <p className="mt-0.5 text-xs text-muted">
+                {formatDate(dateValue)}
+                <span className="mx-1.5 text-border-soft">·</span>
+                {job.service_city || "—"}
+                <span className="mx-1.5 text-border-soft">·</span>
+                {worker}
+              </p>
+              <p className="mt-1 text-sm leading-snug text-foreground/90">
+                {truncateScopeSummary(job.scope_summary, 140)}
+              </p>
+              {showCompleted && job.status === "completed" && job.completed_at ? (
+                <p className="mt-1 text-[11px] text-muted">
+                  Completed {formatDate(job.completed_at)}
+                </p>
+              ) : null}
+            </div>
+            <span
+              className={`shrink-0 rounded-full border px-2.5 py-0.5 text-xs font-medium ${getStatusBadgeTone(job.status)}`}
+            >
+              {jobStatusLabel(job.status)}
+            </span>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 export async function generateMetadata({ params }) {
   const { id } = await params;
   try {
@@ -87,18 +149,23 @@ export default async function CustomerDetailPage({ params }) {
 
   if (!customer || customer.merged_into_customer_id) notFound();
 
-  const [leadCount, leads, services, notes, tags, lastActivity, timeline] = await Promise.all([
-    getCustomerLeadCount(customer.id),
-    listCustomerLeads(customer.id),
-    getCustomerServices(customer.id),
-    getCustomerNotes(customer.id),
-    getCustomerTags(customer.id),
-    getCustomerLastActivity(customer.id),
-    getCustomerTimeline(customer.id),
-  ]);
+  const [leadCount, leads, services, notes, tags, lastActivity, timeline, jobs] =
+    await Promise.all([
+      getCustomerLeadCount(customer.id),
+      listCustomerLeads(customer.id),
+      getCustomerServices(customer.id),
+      getCustomerNotes(customer.id),
+      getCustomerTags(customer.id),
+      getCustomerLastActivity(customer.id),
+      getCustomerTimeline(customer.id),
+      listJobsForCustomer(customer.id),
+    ]);
 
   const recurrence = getCustomerRecurrence(leadCount);
   const tagKeys = tags.map((t) => t.tag_key);
+  const jobSummary = summarizeCustomerJobs(jobs);
+  const { upcoming, history } = partitionCustomerJobs(jobs);
+  const jobHistoryLabel = customerJobHistoryLabel(jobSummary.totalJobs);
 
   return (
     <CommandCenterShell pathname={`/command-center/customers/${customer.id}`}>
@@ -126,6 +193,9 @@ export default async function CustomerDetailPage({ params }) {
                 >
                   {customerRecurrenceLabel(leadCount)}
                 </span>
+                <span className="rounded-full border border-border-soft bg-surface-2 px-3 py-1 text-sm font-medium text-muted">
+                  {jobHistoryLabel}
+                </span>
               </div>
               <p className="mt-2 text-base text-muted">
                 {customer.city || "City not set"}
@@ -134,16 +204,49 @@ export default async function CustomerDetailPage({ params }) {
               </p>
             </div>
 
-            <div className="min-w-[220px] rounded-2xl border border-border-soft bg-surface px-5 py-4 xl:max-w-xs">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
-                Requests
-              </p>
-              <p className="mt-2 font-heading text-3xl font-semibold tabular-nums text-foreground">
-                {leadCount}
-              </p>
-              <p className="mt-1 text-xs text-muted">
-                Last activity {formatDateTime(lastActivity)}
-              </p>
+            <div className="flex flex-col gap-3 sm:flex-row xl:flex-col">
+              <div className="min-w-[180px] rounded-2xl border border-border-soft bg-surface px-5 py-4">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
+                  Requests
+                </p>
+                <p className="mt-2 font-heading text-3xl font-semibold tabular-nums text-foreground">
+                  {leadCount}
+                </p>
+                <p className="mt-1 text-xs text-muted">
+                  Last activity {formatDateTime(lastActivity)}
+                </p>
+              </div>
+              <div className="min-w-[220px] rounded-2xl border border-border-soft bg-surface px-5 py-4">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
+                  Jobs
+                </p>
+                <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                  <div>
+                    <dt className="text-[11px] text-muted">Total</dt>
+                    <dd className="font-heading text-xl font-semibold tabular-nums text-foreground">
+                      {jobSummary.totalJobs}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-[11px] text-muted">Completed</dt>
+                    <dd className="font-heading text-xl font-semibold tabular-nums text-foreground">
+                      {jobSummary.completedJobs}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-[11px] text-muted">Upcoming</dt>
+                    <dd className="tabular-nums text-foreground">{jobSummary.upcomingJobs}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-[11px] text-muted">First / last</dt>
+                    <dd className="text-xs leading-snug text-foreground">
+                      {formatDate(jobSummary.firstJobAt)}
+                      <span className="text-muted"> · </span>
+                      {formatDate(jobSummary.lastJobAt)}
+                    </dd>
+                  </div>
+                </dl>
+              </div>
             </div>
           </div>
         </div>
@@ -196,7 +299,23 @@ export default async function CustomerDetailPage({ params }) {
           </div>
 
           <div className="flex flex-col gap-5 xl:col-span-6">
-            <Panel title="Request history">
+            <Panel title="Upcoming jobs">
+              <JobRows
+                jobs={upcoming}
+                emptyLabel="No upcoming or in-progress jobs."
+                showCompleted={false}
+              />
+            </Panel>
+
+            <Panel title="Job history">
+              <JobRows
+                jobs={history}
+                emptyLabel="No completed or cancelled jobs yet."
+                showCompleted
+              />
+            </Panel>
+
+            <Panel title="Related leads">
               {leads.length === 0 ? (
                 <p className="text-sm text-muted">No leads linked.</p>
               ) : (
@@ -204,7 +323,10 @@ export default async function CustomerDetailPage({ params }) {
                   {leads.map((lead) => {
                     const next = getNextAction(lead.status);
                     return (
-                      <li key={lead.id} className="flex flex-col gap-1 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between">
+                      <li
+                        key={lead.id}
+                        className="flex flex-col gap-1 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
+                      >
                         <div className="min-w-0">
                           <Link
                             href={`/command-center/leads/${lead.id}`}

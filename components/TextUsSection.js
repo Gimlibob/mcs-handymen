@@ -1,13 +1,15 @@
 import Link from "next/link";
 import { MessageSquareText } from "lucide-react";
 import {
-  BACKUP_EMAIL,
   BUSINESS_SMS_DISPLAY,
   BUSINESS_SMS_HREF,
   HAS_PUBLIC_BUSINESS_SMS,
-  MAILTO_HREF,
   SITE_NAME,
+  SITE_URL,
 } from "@/lib/site-config";
+
+const PRIVACY_URL = `${SITE_URL.replace(/\/$/, "")}/privacy`;
+const SMS_TERMS_URL = `${SITE_URL.replace(/\/$/, "")}/sms-terms`;
 
 /**
  * Public SMS invitation for RingCentral "They message us first".
@@ -27,8 +29,8 @@ export default function TextUsSection() {
           Text {SITE_NAME}
         </h2>
         <p className="mt-3 text-base text-muted">
-          Prefer to text? Send the first message to our business number about your service request,
-          repair, estimate, or appointment discussion. We reply manually in that conversation.
+          Prefer to text? Send the first message to our business number. We reply manually about
+          your service request, repair, estimate, or appointment discussion.
         </p>
         <a
           href={BUSINESS_SMS_HREF}
@@ -37,32 +39,27 @@ export default function TextUsSection() {
           Text{" "}
           {BUSINESS_SMS_DISPLAY}
         </a>
-        <div className="mt-6 space-y-2 text-sm text-muted">
-          <p>
-            Message types: individual replies about your request, repairs, estimates, scheduling
-            discussion, and related job details.
-          </p>
-          <p>Message frequency may vary. Message and data rates may apply.</p>
-          <p>Reply STOP to opt out. Reply HELP for assistance.</p>
-          <p>
-            Help also:{" "}
-            <a href={MAILTO_HREF} className="font-medium text-gold-bright underline underline-offset-2">
-              {BACKUP_EMAIL}
-            </a>
-          </p>
-          <p>
-            <Link href="/privacy" className="font-medium text-gold-bright underline underline-offset-2">
-              Privacy Policy
-            </Link>
-            {" · "}
-            <Link
-              href="/sms-terms"
-              className="font-medium text-gold-bright underline underline-offset-2"
-            >
-              SMS Terms
-            </Link>
-          </p>
-        </div>
+        <p className="mt-6 text-sm leading-relaxed text-muted">
+          You can text {SITE_NAME} at {BUSINESS_SMS_DISPLAY} for information about our services. Tap
+          &ldquo;Text {BUSINESS_SMS_DISPLAY}&rdquo; or send your first SMS to this number with your
+          question. By texting {SITE_NAME}, you agree to receive conversational messages from{" "}
+          {SITE_NAME} about your request. Reply STOP to opt out; reply HELP for support; message and
+          data rates may apply; messaging frequency may vary. Visit{" "}
+          <Link
+            href="/privacy"
+            className="font-medium text-gold-bright underline underline-offset-2 break-all"
+          >
+            {PRIVACY_URL}
+          </Link>{" "}
+          for our Privacy Policy and{" "}
+          <Link
+            href="/sms-terms"
+            className="font-medium text-gold-bright underline underline-offset-2 break-all"
+          >
+            {SMS_TERMS_URL}
+          </Link>{" "}
+          for our SMS Terms.
+        </p>
       </div>
     </section>
   );

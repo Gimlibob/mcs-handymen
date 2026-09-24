@@ -77,6 +77,15 @@ export default function Footer() {
             |
           </span>
           <Link
+            href="/sms-terms"
+            className="font-medium text-muted transition-colors hover:text-gold-bright"
+          >
+            SMS Terms
+          </Link>
+          <span className="text-muted/50" aria-hidden="true">
+            |
+          </span>
+          <Link
             href="/estimate-terms"
             className="font-medium text-muted/80 transition-colors hover:text-gold-bright"
           >

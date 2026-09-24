@@ -3,6 +3,7 @@ import Hero from "@/components/Hero";
 import Services from "@/components/Services";
 import HowItWorks from "@/components/HowItWorks";
 import QuoteSection from "@/components/QuoteSection";
+import TextUsSection from "@/components/TextUsSection";
 import FacebookSection from "@/components/FacebookSection";
 import About from "@/components/About";
 import Footer from "@/components/Footer";
@@ -19,6 +20,7 @@ export default function HomePage({ area = null }) {
         <Services />
         <HowItWorks />
         <QuoteSection initialCity={area?.city ?? ""} />
+        <TextUsSection />
         <FacebookSection />
         <About />
       </main>

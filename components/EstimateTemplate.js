@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   LEGAL_ENTITY_FULL,
   MIN_SERVICE_CALL_USD,
@@ -101,9 +102,9 @@ export default function EstimateTemplate() {
         </h3>
         <p className="mt-2">
           The standard Service Agreement / Estimate Terms are a public template at{" "}
-          <a href="/estimate-terms" className="font-medium text-gold-bright underline underline-offset-2">
+          <Link href="/estimate-terms" className="font-medium text-gold-bright underline underline-offset-2">
             /estimate-terms
-          </a>
+          </Link>
           . That public page is not itself a contract. Those terms apply to this job only after the
           customer accepts this individual estimate. The customer does not need to fill out the
           public template page.

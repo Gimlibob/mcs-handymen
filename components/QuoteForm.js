@@ -58,18 +58,8 @@ export default function QuoteForm({ initialCity = "" }) {
   const fileInputRef = useRef(null);
   const formId = useId();
 
-  // Prefill city from local landing pages (e.g. /manvel-tx → Manvel)
-  useEffect(() => {
-    if (!initialCity || !SERVICE_CITIES.includes(initialCity) || initialCity === "Other") {
-      return;
-    }
-    setFields((prev) => ({
-      ...prev,
-      city: initialCity,
-      cityOther: "",
-    }));
-  }, [initialCity]);
-
+  // City prefill: initial state covers first paint on area pages.
+  // Do not remount the form with a changing key — that would wipe in-progress answers.
   // Prefill from service-card clicks (smooth-scrolled to this form)
   useEffect(() => {
     function applyServiceInquiry(serviceName) {

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import LegalPageShell from "@/components/LegalPageShell";
 import LegalSection from "@/components/LegalSection";
 import {
@@ -24,9 +25,13 @@ export default function TermsPage() {
       <p>
         By using the {SITE_NAME} website or submitting a Request a Quote form, you agree to these
         Website Terms &amp; Conditions (&ldquo;Terms&rdquo;). Please also review our{" "}
-        <a href="/privacy" className="font-medium text-gold-bright underline underline-offset-2">
+        <Link href="/privacy" className="font-medium text-gold-bright underline underline-offset-2">
           Privacy Policy
-        </a>
+        </Link>
+        . Text messaging is covered separately by our{" "}
+        <Link href="/sms-terms" className="font-medium text-gold-bright underline underline-offset-2">
+          SMS Terms
+        </Link>
         .
       </p>
 
@@ -72,12 +77,12 @@ export default function TermsPage() {
           If we can help, we may send a written estimate for that job. Visiting this website, or
           visiting the Estimate Terms page, does not create a contract. A job agreement is formed
           only if {SITE_NAME} issues an individual estimate and you accept that estimate. The{" "}
-          <a
+          <Link
             href="/estimate-terms"
             className="font-medium text-gold-bright underline underline-offset-2"
           >
             Service Agreement / Estimate Terms
-          </a>{" "}
+          </Link>{" "}
           are a template of terms meant to be incorporated into an accepted estimate, together with
           the job-specific details listed on that estimate.
         </p>
@@ -223,9 +228,9 @@ export default function TermsPage() {
       <LegalSection number={16} title="Photos and Project Documentation">
         <p>
           Photos you upload with a quote request are used to review the project, as described in our{" "}
-          <a href="/privacy" className="font-medium text-gold-bright underline underline-offset-2">
+          <Link href="/privacy" className="font-medium text-gold-bright underline underline-offset-2">
             Privacy Policy
-          </a>
+          </Link>
           .
         </p>
         <p>
@@ -287,7 +292,22 @@ export default function TermsPage() {
         </p>
       </LegalSection>
 
-      <LegalSection number={22} title="Contact">
+      <LegalSection number={22} title="Text Messaging (SMS)">
+        <p>
+          If we communicate with you by text about a service request, repair, estimate, or
+          appointment, those messages are governed by our{" "}
+          <Link href="/sms-terms" className="font-medium text-gold-bright underline underline-offset-2">
+            SMS Terms
+          </Link>{" "}
+          and the Text Messaging (SMS) section of our{" "}
+          <Link href="/privacy" className="font-medium text-gold-bright underline underline-offset-2">
+            Privacy Policy
+          </Link>
+          . The website quote form does not collect a phone number and is not SMS consent.
+        </p>
+      </LegalSection>
+
+      <LegalSection number={23} title="Contact">
         <p>
           Questions about these Terms may be sent to{" "}
           <a href={MAILTO_HREF} className="font-medium text-gold-bright underline underline-offset-2">

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import LegalPageShell from "@/components/LegalPageShell";
 import ServiceAgreement from "@/components/ServiceAgreement";
 import { SITE_NAME } from "@/lib/site-config";
@@ -22,9 +23,9 @@ export default function EstimateTermsPage() {
         <p>
           <strong className="font-medium text-foreground">Website Terms</strong> govern use of this
           website and submitting a Request a Quote form. See the{" "}
-          <a href="/terms" className="font-medium text-gold-bright underline underline-offset-2">
+          <Link href="/terms" className="font-medium text-gold-bright underline underline-offset-2">
             Website Terms &amp; Conditions
-          </a>
+          </Link>
           .
         </p>
         <p>

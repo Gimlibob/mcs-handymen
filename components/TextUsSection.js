@@ -35,7 +35,7 @@ export default function TextUsSection() {
           <MessageSquareText className="h-6 w-6 text-gold-bright" aria-hidden="true" />
         </span>
         <h2 className="mt-4 font-heading text-2xl font-bold text-foreground sm:text-3xl">
-          Text {SITE_NAME}
+          Text MCS <span className="text-gold">Handymen</span>
         </h2>
         <p className="mt-3 text-base text-muted">
           Prefer to text? Send the first message to our business number. We reply manually about

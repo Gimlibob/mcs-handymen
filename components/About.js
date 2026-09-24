@@ -10,7 +10,7 @@ export default function About() {
           id="about-heading"
           className="font-heading text-xl font-bold text-foreground sm:text-2xl"
         >
-          About MCS Handymen
+          About MCS <span className="text-gold">Handymen</span>
         </h2>
         <p className="mt-4 text-[15px] leading-relaxed text-muted sm:text-base">
           MCS Handymen provides practical help for homeowners, landlords, property managers, and

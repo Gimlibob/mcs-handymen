@@ -10,7 +10,7 @@ export default function FacebookSection() {
           <FacebookIcon className="h-6 w-6 text-gold-bright" />
         </span>
         <h2 className="mt-4 font-heading text-2xl font-bold text-foreground sm:text-3xl">
-          Follow MCS Handymen
+          Follow MCS <span className="text-gold">Handymen</span>
         </h2>
         <p className="mt-3 text-base text-muted">
           See recent work, updates, and message us directly on Facebook.

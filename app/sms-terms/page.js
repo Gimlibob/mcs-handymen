@@ -55,10 +55,13 @@ export default function SmsTermsPage() {
 
       <LegalSection number={3} title="How Consent Works">
         <p>
-          A customer may start a text conversation by sending the first SMS to the {SITE_NAME}{" "}
+          A customer may start a text conversation by sending the first SMS to the {SITE_NAME}
+          {" "}
           business number shown on this website (see the Text Us section on the home page).{" "}
-          {SITE_NAME} may then reply within that same conversation about the customer&apos;s
-          request, repair, estimate, or appointment discussion.
+          {SITE_NAME}
+          {" "}
+          may then reply within that same conversation about the customer&apos;s request, repair,
+          estimate, or appointment discussion.
         </p>
         <p>
           The website Request a Quote form does not collect a phone number and is not used as SMS

@@ -139,12 +139,17 @@ export default function PrivacyPage() {
 
       <LegalSection number={9} title="Text Messaging (SMS)">
         <p>
-          {SITE_NAME} may exchange text messages with customers about their individual service
-          requests, repairs, estimates, and appointments. Under our current RingCentral setup,
-          customers may start by texting the {SITE_NAME} business number shown on this website;{" "}
-          {SITE_NAME} then replies manually within that conversation. SMS messaging is separate
-          from the website quote form, which does not collect a phone number and is not SMS
-          consent.
+          {SITE_NAME}
+          {" "}
+          may exchange text messages with customers about their individual service requests,
+          repairs, estimates, and appointments. Under our current RingCentral setup, customers may
+          start by texting the {SITE_NAME}
+          {" "}
+          business number shown on this website;{" "}
+          {SITE_NAME}
+          {" "}
+          then replies manually within that conversation. SMS messaging is separate from the
+          website quote form, which does not collect a phone number and is not SMS consent.
         </p>
         <p>
           <strong className="font-medium text-foreground">Information related to SMS.</strong> When

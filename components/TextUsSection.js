@@ -34,7 +34,8 @@ export default function TextUsSection() {
           href={BUSINESS_SMS_HREF}
           className="mt-6 inline-flex min-h-[52px] items-center justify-center rounded-xl bg-gold px-6 text-base font-semibold text-black transition-colors hover:bg-gold-bright sm:min-w-[240px]"
         >
-          Text {BUSINESS_SMS_DISPLAY}
+          Text{" "}
+          {BUSINESS_SMS_DISPLAY}
         </a>
         <div className="mt-6 space-y-2 text-sm text-muted">
           <p>

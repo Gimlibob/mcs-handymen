@@ -7,11 +7,11 @@ import "leaflet/dist/leaflet.css";
 
 /** Exact golden polygon vertices [lat, lng] */
 export const SERVICE_POLYGON = [
-  [29.504596, -95.22707],
+  [29.534421, -95.206934],
   [29.390749, -95.215308],
   [29.396914, -95.460597],
-  [29.504194, -95.437306],
-  [29.528872, -95.348788],
+  [29.553174, -95.495578],
+  [29.580544, -95.431631],
 ];
 
 /** Operational base (fallback center only — never shown as a pin/address) */

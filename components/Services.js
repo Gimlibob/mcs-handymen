@@ -52,8 +52,7 @@ export default function Services() {
 
         <p className="mx-auto mt-5 max-w-3xl rounded-xl border border-gold/50 bg-surface-2 px-4 py-3.5 text-center text-[15px] leading-[1.7] text-gold-bright sm:px-6 sm:text-base sm:leading-relaxed">
           Small repairs &amp; maintenance only. No roofing, major remodeling, structural work, or
-          major plumbing or electrical work. A $125 minimum service call applies and includes local
-          travel.
+          major plumbing or electrical work.
         </p>
 
         <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4">

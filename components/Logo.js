@@ -4,7 +4,7 @@ import Image from "next/image";
  * Brand logo: crest mark + wordmark.
  * Crest file: /public/images/logo.png (transparent PNG)
  */
-export default function Logo({ className = "" }) {
+export default function Logo({ className = "", stackedTagline = false }) {
   return (
     <span className={`inline-flex max-w-full min-w-0 items-center gap-2 sm:gap-2.5 ${className}`}>
       <Image
@@ -16,14 +16,27 @@ export default function Logo({ className = "" }) {
         priority
         unoptimized
       />
-      <span className="flex min-w-0 flex-col leading-none">
+      <span
+        className={`flex min-w-0 flex-col leading-none ${stackedTagline ? "items-center text-center" : ""}`}
+      >
         <span className="font-heading text-base font-bold tracking-wide text-foreground sm:text-lg">
           MCS<span className="text-gold-bright"> HANDYMEN</span>
         </span>
-        <span className="text-[10px] font-medium uppercase leading-tight tracking-wide text-muted sm:tracking-[0.2em]">
-          Manvel &middot; Iowa Colony &middot; Rosharon &middot; Alvin &middot; Fresno &middot;
-          Friendswood
-        </span>
+        {stackedTagline ? (
+          <span className="text-[10px] font-medium uppercase leading-tight tracking-wide text-muted sm:tracking-[0.2em]">
+            <span className="block whitespace-nowrap">
+              Manvel &middot; Iowa Colony &middot; Rosharon
+            </span>
+            <span className="block whitespace-nowrap">
+              Alvin &middot; Fresno &middot; Friendswood
+            </span>
+          </span>
+        ) : (
+          <span className="text-[10px] font-medium uppercase leading-tight tracking-wide text-muted sm:tracking-[0.2em]">
+            Manvel &middot; Iowa Colony &middot; Rosharon &middot; Alvin &middot; Fresno &middot;
+            Friendswood
+          </span>
+        )}
       </span>
     </span>
   );

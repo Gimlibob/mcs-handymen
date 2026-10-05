@@ -21,7 +21,8 @@ export default function Logo({ className = "" }) {
           MCS<span className="text-gold-bright"> HANDYMEN</span>
         </span>
         <span className="text-[10px] font-medium uppercase leading-tight tracking-wide text-muted sm:tracking-[0.2em]">
-          Manvel &middot; Iowa Colony &middot; Rosharon &middot; Alvin
+          Manvel &middot; Iowa Colony &middot; Rosharon &middot; Alvin &middot; Fresno &middot;
+          Friendswood
         </span>
       </span>
     </span>

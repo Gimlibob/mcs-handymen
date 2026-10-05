@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import Link from "next/link";
 import { ExternalLink } from "lucide-react";
-import { SERVICE_AREA } from "@/lib/site-config";
+import { SERVICE_AREA_PAGES } from "@/lib/service-areas";
 import "leaflet/dist/leaflet.css";
 
 /** Exact golden polygon vertices [lat, lng] */
@@ -147,7 +148,18 @@ export default function ServiceAreaMap() {
           Our Service Area
         </h2>
         <p className="mt-2 text-base text-muted">We come to you.</p>
-        <p className="mt-1 text-sm text-muted/90">{SERVICE_AREA}</p>
+        <p className="mt-1 text-sm text-muted/90">
+          {SERVICE_AREA_PAGES.map((area, index) => (
+            <span key={area.slug}>
+              {index > 0 && index < SERVICE_AREA_PAGES.length - 1 ? ", " : null}
+              {index === SERVICE_AREA_PAGES.length - 1 ? " & " : null}
+              <Link href={`/${area.slug}`} className="hover:text-gold-bright">
+                {area.city}
+              </Link>
+            </span>
+          ))}
+          {", TX"}
+        </p>
       </div>
 
       <div className="mt-5 w-full">

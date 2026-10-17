@@ -18,9 +18,10 @@ import {
   Blinds,
   SquareStack,
 } from "lucide-react";
-import { SERVICES, FACEBOOK_URL } from "@/lib/site-config";
+import { SERVICES, FACEBOOK_URL, SHOW_CHRISTMAS_PROMO } from "@/lib/site-config";
 import { selectServiceInquiry } from "@/lib/service-inquiry";
 import { PrimaryLink, SecondaryLink } from "./Buttons";
+import ChristmasPromo from "./ChristmasPromo";
 import FacebookIcon from "./icons/FacebookIcon";
 
 const ICONS = {
@@ -54,6 +55,8 @@ export default function Services() {
           Small repairs &amp; maintenance only. No roofing, major remodeling, structural work, or
           major plumbing or electrical work.
         </p>
+
+        {SHOW_CHRISTMAS_PROMO ? <ChristmasPromo /> : null}
 
         <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4">
           {SERVICES.map((service) => {

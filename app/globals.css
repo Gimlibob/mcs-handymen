@@ -57,6 +57,23 @@ textarea:focus-visible {
   border-radius: 4px;
 }
 
+/* Seasonal Christmas promo bulbs */
+.xmas-bulb {
+  color: var(--bulb);
+  filter: drop-shadow(0 0 2px var(--bulb)) drop-shadow(0 0 6px var(--bulb));
+  animation: xmas-glow 3.6s ease-in-out infinite;
+}
+
+@keyframes xmas-glow {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
 /* Respect users who prefer reduced motion */
 @media (prefers-reduced-motion: reduce) {
   html {

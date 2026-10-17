@@ -1,3 +1,7 @@
+"use client";
+
+import { CHRISTMAS_LIGHT_SERVICE } from "@/lib/site-config";
+import { selectServiceInquiry } from "@/lib/service-inquiry";
 import { PrimaryLink } from "./Buttons";
 
 const BULB_COLORS = ["#ff5a5a", "#ffd166", "#4ade80", "#60a5fa", "#fb923c"];
@@ -80,7 +84,14 @@ export default function ChristmasPromo() {
         <p className="mt-4 text-xs font-semibold uppercase tracking-[0.18em] text-gold-bright">
           Now booking for the holiday season.
         </p>
-        <PrimaryLink href="#quote" className="mt-6 sm:min-w-[220px]">
+        <PrimaryLink
+          href="#quote"
+          onClick={(event) => {
+            event.preventDefault();
+            selectServiceInquiry(CHRISTMAS_LIGHT_SERVICE);
+          }}
+          className="mt-6 sm:min-w-[220px]"
+        >
           Request a Quote
         </PrimaryLink>
       </div>

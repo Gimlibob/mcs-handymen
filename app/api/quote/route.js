@@ -5,8 +5,8 @@ import {
   BACKUP_EMAIL,
   CONTACT_METHODS,
   PROPERTY_TYPES,
+  QUOTE_PROJECT_TYPES,
   SERVICE_CITIES,
-  SERVICES,
   SITE_NAME,
 } from "@/lib/site-config";
 import {
@@ -23,7 +23,7 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const serviceNames = new Set(SERVICES.map((s) => s.name));
+const serviceNames = new Set(QUOTE_PROJECT_TYPES);
 
 function escapeHtml(value) {
   return String(value)

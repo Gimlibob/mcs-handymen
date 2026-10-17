@@ -5,7 +5,7 @@ import { Upload, X, Loader2, CheckCircle2, AlertTriangle } from "lucide-react";
 import {
   SERVICE_CITIES,
   PROPERTY_TYPES,
-  SERVICES,
+  QUOTE_PROJECT_TYPES,
   CONTACT_METHODS,
   BACKUP_EMAIL,
   MAILTO_HREF,
@@ -64,7 +64,7 @@ export default function QuoteForm({ initialCity = "" }) {
   useEffect(() => {
     function applyServiceInquiry(serviceName) {
       if (!serviceName) return;
-      const known = SERVICES.some((s) => s.name === serviceName);
+      const known = QUOTE_PROJECT_TYPES.includes(serviceName);
       if (!known) return;
 
       setStatus("idle");
@@ -394,9 +394,9 @@ export default function QuoteForm({ initialCity = "" }) {
           className={inputClass(errors.projectType)}
         >
           <option value="">Select a service&hellip;</option>
-          {SERVICES.map((service) => (
-            <option key={service.id} value={service.name}>
-              {service.name}
+          {QUOTE_PROJECT_TYPES.map((type) => (
+            <option key={type} value={type}>
+              {type}
             </option>
           ))}
           <option value="Other">Other</option>

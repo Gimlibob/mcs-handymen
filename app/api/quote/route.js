@@ -63,27 +63,19 @@ function validatePayload(body) {
   if (fullName.length < 2) return { error: "Please enter your full name." };
   if (!EMAIL_RE.test(email)) return { error: "Please enter a valid email address." };
 
-  if (citySelection === "Other") {
-    if (city.length < 2) return { error: "Please enter your city name." };
-  } else if (!SERVICE_CITIES.includes(city) || city === "Other") {
+  if (citySelection !== "Other" && city && !SERVICE_CITIES.includes(city)) {
     return { error: "Please select your city." };
   }
 
-  if (!PROPERTY_TYPES.includes(propertyType)) {
+  if (propertyType && !PROPERTY_TYPES.includes(propertyType)) {
     return { error: "Please select a property type." };
   }
 
-  if (projectTypeSelection === "Other") {
-    if (projectType.length < 2) return { error: "Please enter your custom service or task." };
-  } else if (!serviceNames.has(projectType)) {
+  if (projectTypeSelection !== "Other" && projectType && !serviceNames.has(projectType)) {
     return { error: "Please select a project type." };
   }
 
-  if (description.length < 10) {
-    return { error: "Please describe the project (at least 10 characters)." };
-  }
-
-  if (!CONTACT_METHODS.includes(contactMethod)) {
+  if (contactMethod && !CONTACT_METHODS.includes(contactMethod)) {
     return { error: "Please choose a preferred contact method." };
   }
 
@@ -169,7 +161,12 @@ async function assertPrivatePhotosExist(photos) {
   }
 }
 
-function buildEmailContent(data, photoLinks) {
+function buildEmailContent(submission, photoLinks) {
+  const data = { ...submission };
+  for (const key of ["city", "propertyType", "projectType", "contactMethod", "preferredDate", "description"]) {
+    if (!data[key]) data[key] = "Not specified";
+  }
+
   const lines = [
     `New quote request from ${SITE_NAME}`,
     "",
@@ -179,7 +176,7 @@ function buildEmailContent(data, photoLinks) {
     `Property type: ${data.propertyType}`,
     `Project type: ${data.projectType}`,
     `Preferred contact: ${data.contactMethod}`,
-    `Preferred date: ${data.preferredDate || "Not specified"}`,
+    `Preferred date: ${data.preferredDate}`,
     "",
     "Project description:",
     data.description,
@@ -203,7 +200,7 @@ function buildEmailContent(data, photoLinks) {
       <p><strong>Property type:</strong> ${escapeHtml(data.propertyType)}</p>
       <p><strong>Project type:</strong> ${escapeHtml(data.projectType)}</p>
       <p><strong>Preferred contact:</strong> ${escapeHtml(data.contactMethod)}</p>
-      <p><strong>Preferred date:</strong> ${escapeHtml(data.preferredDate || "Not specified")}</p>
+      <p><strong>Preferred date:</strong> ${escapeHtml(data.preferredDate)}</p>
       <p><strong>Project description:</strong></p>
       <p style="white-space: pre-wrap;">${escapeHtml(data.description)}</p>
       ${
@@ -268,7 +265,7 @@ export async function POST(request) {
       from: fromAddress,
       to: [toAddress],
       replyTo: data.email,
-      subject: `New Quote Request – ${data.fullName} – ${data.city}`,
+      subject: `New Quote Request – ${data.fullName}${data.city ? ` – ${data.city}` : ""}`,
       text,
       html,
     });

@@ -147,18 +147,6 @@ export default function QuoteForm({ initialCity = "" }) {
     if (fields.fullName.trim().length < 2) next.fullName = "Please enter your full name.";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fields.email))
       next.email = "Please enter a valid email address.";
-    if (!fields.city) next.city = "Please select your city.";
-    else if (fields.city === "Other" && fields.cityOther.trim().length < 2) {
-      next.cityOther = "Please enter your city name.";
-    }
-    if (!fields.propertyType) next.propertyType = "Please select a property type.";
-    if (!fields.projectType) next.projectType = "Please select a project type.";
-    else if (fields.projectType === "Other" && fields.projectTypeOther.trim().length < 2) {
-      next.projectTypeOther = "Please enter your custom service or task.";
-    }
-    if (fields.description.trim().length < 10)
-      next.description = "Please describe the project (at least 10 characters).";
-    if (!fields.contactMethod) next.contactMethod = "Please choose a preferred contact method.";
     return next;
   }
 
@@ -194,10 +182,11 @@ export default function QuoteForm({ initialCity = "" }) {
         });
       }
 
-      const cityValue = fields.city === "Other" ? fields.cityOther.trim() : fields.city;
+      const cityValue =
+        fields.city === "Other" ? fields.cityOther.trim() || "Other" : fields.city;
       const projectTypeValue =
         fields.projectType === "Other"
-          ? fields.projectTypeOther.trim()
+          ? fields.projectTypeOther.trim() || "Other"
           : fields.projectType;
 
       const response = await fetch("/api/quote", {
@@ -317,7 +306,7 @@ export default function QuoteForm({ initialCity = "" }) {
         />
       </Field>
 
-      <Field id={`${formId}-city`} label="City" required error={errors.city}>
+      <Field id={`${formId}-city`} label="City" optional error={errors.city}>
         <select
           id={`${formId}-city`}
           name="city"
@@ -344,7 +333,7 @@ export default function QuoteForm({ initialCity = "" }) {
         <Field
           id={`${formId}-cityOther`}
           label="Your City"
-          required
+          optional
           error={errors.cityOther}
         >
           <input
@@ -365,7 +354,7 @@ export default function QuoteForm({ initialCity = "" }) {
       <Field
         id={`${formId}-propertyType`}
         label="Property Type"
-        required
+        optional
         error={errors.propertyType}
       >
         <select
@@ -386,7 +375,7 @@ export default function QuoteForm({ initialCity = "" }) {
         </select>
       </Field>
 
-      <Field id={`${formId}-projectType`} label="Project Type" required error={errors.projectType}>
+      <Field id={`${formId}-projectType`} label="Project Type" optional error={errors.projectType}>
         <select
           id={`${formId}-projectType`}
           name="projectType"
@@ -414,7 +403,7 @@ export default function QuoteForm({ initialCity = "" }) {
         <Field
           id={`${formId}-projectTypeOther`}
           label="Custom Service / Task"
-          required
+          optional
           error={errors.projectTypeOther}
         >
           <input
@@ -436,7 +425,7 @@ export default function QuoteForm({ initialCity = "" }) {
       <Field
         id={`${formId}-description`}
         label="Project Description"
-        required
+        optional
         error={errors.description}
       >
         <textarea
@@ -505,7 +494,7 @@ export default function QuoteForm({ initialCity = "" }) {
 
       <fieldset>
         <legend className="mb-2 text-sm font-medium text-foreground">
-          Preferred Contact Method <span className="text-gold-bright">*</span>
+          Preferred Contact Method <span className="text-muted">(optional)</span>
         </legend>
         <div className="flex flex-wrap gap-3">
           {CONTACT_METHODS.map((method) => (

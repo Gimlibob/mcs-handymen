@@ -25,6 +25,9 @@ import {
   sanitizeUploadFileName,
 } from "@/lib/quote-limits";
 import { upload } from "@vercel/blob/client";
+import { useRouter } from "next/navigation";
+import ContactLink from "@/components/ContactLink";
+import { THANK_YOU_PATHS, trackLeadFormSubmitted } from "@/lib/contact-tracking";
 
 const MAX_FILES = MAX_QUOTE_PHOTOS;
 const MAX_FILE_SIZE_MB = MAX_PHOTO_SIZE_MB;
@@ -57,6 +60,7 @@ export default function QuoteForm({ initialCity = "" }) {
   const [status, setStatus] = useState("idle"); // idle | submitting | success | error
   const fileInputRef = useRef(null);
   const formId = useId();
+  const router = useRouter();
 
   // City prefill: initial state covers first paint on area pages.
   // Do not remount the form with a changing key — that would wipe in-progress answers.
@@ -220,6 +224,7 @@ export default function QuoteForm({ initialCity = "" }) {
 
       if (!response.ok) throw new Error("Submission failed");
 
+      trackLeadFormSubmitted();
       setStatus("success");
       setFields({
         ...initialFields,
@@ -232,7 +237,10 @@ export default function QuoteForm({ initialCity = "" }) {
       setErrors({});
     } catch {
       setStatus("error");
+      return;
     }
+
+    router.push(THANK_YOU_PATHS.form);
   }
 
   if (status === "success") {
@@ -269,9 +277,9 @@ export default function QuoteForm({ initialCity = "" }) {
           <p>
             Sorry, we couldn&apos;t send your request right now. Please email your project
             description and photos directly to{" "}
-            <a href={MAILTO_HREF} className="font-semibold underline">
+            <ContactLink method="email" href={MAILTO_HREF} className="font-semibold underline">
               {BACKUP_EMAIL}
-            </a>
+            </ContactLink>
             .
           </p>
         </div>

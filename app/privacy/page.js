@@ -78,7 +78,11 @@ export default function PrivacyPage() {
         </p>
       </LegalSection>
 
-      <LegalSection number={4} title="Information Stored in Your Browser and Site Analytics">
+      <LegalSection
+        number={4}
+        id="cookies-and-ads"
+        title="Information Stored in Your Browser, Site Analytics, and Advertising"
+      >
         <p>
           If you click a service card, the site may save the service name in your browser&apos;s
           session storage so the quote form can be pre-filled. That value stays on your device and
@@ -130,6 +134,53 @@ export default function PrivacyPage() {
             policies.google.com/technologies/partner-sites
           </a>
           .
+        </p>
+        <p>
+          We also use the{" "}
+          <strong className="font-medium text-foreground">Meta Pixel</strong>, a tool from Meta
+          Platforms loaded through Google Tag Manager, to measure the results of our Facebook and
+          Instagram ads and to show our ads to people who have visited the site. Third parties,
+          including Meta, may use cookies, web beacons, and similar technologies to collect or
+          receive information from this website and elsewhere on the internet, such as the pages
+          you visit, your browser and device information, and your IP address, and use that
+          information to provide measurement services and to target and deliver ads. Meta processes
+          that information under its own privacy policy.
+        </p>
+        <p>
+          We also tell Meta when a visitor sends the quote form, clicks our email link, or clicks
+          our Text button. These signals only say which of those actions happened. They do not
+          include your name, email address, phone number, quote details, photos, or message
+          content.
+        </p>
+        <p>
+          You can opt out of interest-based ads from participating companies at{" "}
+          <a
+            href="https://www.aboutads.info/choices"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-gold-bright underline underline-offset-2"
+          >
+            aboutads.info/choices
+          </a>{" "}
+          (or{" "}
+          <a
+            href="https://www.youronlinechoices.eu"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-gold-bright underline underline-offset-2"
+          >
+            youronlinechoices.eu
+          </a>{" "}
+          in Europe), manage the ads you see on Facebook and Instagram in{" "}
+          <a
+            href="https://www.facebook.com/adpreferences"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-gold-bright underline underline-offset-2"
+          >
+            Meta&apos;s ad preferences
+          </a>
+          , and block or delete cookies in your browser settings.
         </p>
       </LegalSection>
 
@@ -213,7 +264,9 @@ export default function PrivacyPage() {
             SMS consent and mobile enrollment data.
           </strong>{" "}
           SMS consent and mobile opt-in / enrollment data are not shared with third parties or
-          affiliates.
+          affiliates. The website advertising signal described in Section 4 only records that the
+          Text button on the website was clicked; it does not include your phone number, your
+          messages, or any record of SMS consent.
         </p>
         <p>
           <strong className="font-medium text-foreground">
@@ -248,6 +301,10 @@ export default function PrivacyPage() {
           <li>
             Google (Google Tag Manager and the Google measurement or advertising tools it loads, as
             described in Section 4)
+          </li>
+          <li>
+            Meta Platforms (the Meta Pixel and the website action signals described in Section 4,
+            for ad measurement and delivery)
           </li>
           <li>Resend (quote-request notification email delivery)</li>
           <li>

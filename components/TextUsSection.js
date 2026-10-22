@@ -3,6 +3,7 @@
 import { useId, useState } from "react";
 import Link from "next/link";
 import { MessageSquareText } from "lucide-react";
+import ContactLink from "@/components/ContactLink";
 import {
   BUSINESS_SMS_DISPLAY,
   BUSINESS_SMS_HREF,
@@ -63,9 +64,9 @@ export default function TextUsSection() {
         </div>
 
         {consented ? (
-          <a href={BUSINESS_SMS_HREF} className={buttonClassName}>
+          <ContactLink method="sms" href={BUSINESS_SMS_HREF} className={buttonClassName}>
             Text {BUSINESS_SMS_DISPLAY}
-          </a>
+          </ContactLink>
         ) : (
           <button type="button" disabled aria-disabled="true" className={buttonClassName}>
             Text {BUSINESS_SMS_DISPLAY}

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Mail } from "lucide-react";
 import FacebookIcon from "./icons/FacebookIcon";
 import Logo from "./Logo";
+import ContactLink from "./ContactLink";
 import {
   FACEBOOK_URL,
   BACKUP_EMAIL,
@@ -44,14 +45,27 @@ export default function Footer() {
             <FacebookIcon className="h-4 w-4" />
             Facebook
           </a>
-          <a
+          <ContactLink
+            method="email"
             href={MAILTO_HREF}
             className="inline-flex items-center gap-2 text-sm text-muted/80 transition-colors hover:text-gold-bright"
           >
             <Mail className="h-4 w-4" aria-hidden="true" />
             {BACKUP_EMAIL}
-          </a>
+          </ContactLink>
         </div>
+
+        <p className="max-w-xl text-xs text-muted/70">
+          We use cookies and similar technologies, including from Google and Meta, for site
+          analytics and advertising.{" "}
+          <Link
+            href="/privacy#cookies-and-ads"
+            className="font-medium text-muted underline underline-offset-2 transition-colors hover:text-gold-bright"
+          >
+            Learn more and opt out
+          </Link>
+          .
+        </p>
 
         <p className="text-xs text-muted/70">
           &copy; 2026 {LEGAL_ENTITY_FULL}. All rights reserved.

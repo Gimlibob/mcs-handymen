@@ -87,9 +87,49 @@ export default function PrivacyPage() {
         <p>
           This website includes{" "}
           <strong className="font-medium text-foreground">Vercel Analytics</strong>, which collects
-          aggregated, privacy-oriented usage information about page visits. The site&apos;s own
-          code does not set marketing cookies and does not include a separate advertising analytics
-          script.
+          aggregated, privacy-oriented usage information about page visits.
+        </p>
+        <p>
+          The site also loads{" "}
+          <strong className="font-medium text-foreground">Google Tag Manager</strong>, a Google
+          service we use to manage measurement and advertising tags on the website. Through it, we
+          may use Google tools such as Google Analytics or Google Ads to understand how visitors
+          find and use the site and to measure our advertising. When those tools are active, Google
+          may set cookies or similar technologies in your browser and receive information such as
+          the pages you visit, your browser and device type, your approximate location based on
+          your IP address, and how you arrived at the site. Google processes that information under
+          its own privacy policy. We do not configure these tools to collect the contents of
+          quote-form submissions or SMS conversations.
+        </p>
+        <p>
+          You can block or delete cookies in your browser settings, manage ad personalization in{" "}
+          <a
+            href="https://adssettings.google.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-gold-bright underline underline-offset-2"
+          >
+            Google&apos;s Ad Settings
+          </a>
+          , and opt out of Google Analytics with{" "}
+          <a
+            href="https://tools.google.com/dlpage/gaoptout"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-gold-bright underline underline-offset-2"
+          >
+            Google&apos;s opt-out browser add-on
+          </a>
+          . Google explains how it uses information from sites that use its services at{" "}
+          <a
+            href="https://policies.google.com/technologies/partner-sites"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-gold-bright underline underline-offset-2"
+          >
+            policies.google.com/technologies/partner-sites
+          </a>
+          .
         </p>
       </LegalSection>
 
@@ -205,6 +245,10 @@ export default function PrivacyPage() {
         </p>
         <ul className="list-disc space-y-1.5 pl-5">
           <li>Vercel (website hosting, private photo storage, and site analytics)</li>
+          <li>
+            Google (Google Tag Manager and the Google measurement or advertising tools it loads, as
+            described in Section 4)
+          </li>
           <li>Resend (quote-request notification email delivery)</li>
           <li>
             RingCentral (business SMS messaging and related delivery processing when we exchange

@@ -8,7 +8,7 @@ export default function QuoteSection({ initialCity = "" }) {
           Request a Quote
         </h2>
         <p className="mt-3 text-center text-sm text-muted">
-          Fill out the form below and include a few photos so we can review your project.
+          Fill out the form below. Photos are optional, but they help us review your project.
         </p>
         <div className="mt-8">
           <QuoteForm initialCity={initialCity} />

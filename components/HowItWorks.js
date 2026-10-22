@@ -8,8 +8,8 @@ const STEPS = [
   },
   {
     icon: ImageUp,
-    title: "Upload Photos",
-    description: "Add clear photos of the area or item needing work.",
+    title: "Add Photos (Optional)",
+    description: "Clear photos of the area or item help us review the work.",
   },
   {
     icon: MailCheck,

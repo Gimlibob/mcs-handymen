@@ -20,7 +20,7 @@ const VARIANTS = {
     lead: "Your project request has been received.",
     body: () => (
       <p>
-        We&apos;ll review your details and photos, then contact you by your preferred method as
+        We&apos;ll review your request, then contact you by your preferred method as
         soon as we can.
       </p>
     ),
@@ -84,7 +84,7 @@ export default async function ThankYouPage({ params }) {
   return (
     <>
       <Header />
-      <main id="main-content" className="flex-1 scroll-mt-28 px-4 py-16 sm:px-6 sm:py-24">
+      <main id="main-content" className="flex-1 px-4 py-16 sm:px-6 sm:py-24">
         <div
           role="status"
           className="mx-auto flex max-w-xl flex-col items-center gap-4 rounded-xl border border-gold bg-surface p-8 text-center"

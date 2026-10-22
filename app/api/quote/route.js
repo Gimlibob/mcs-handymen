@@ -58,7 +58,7 @@ function validatePayload(body) {
   const description = trimField(body.description, 5000);
   const contactMethod = trimField(body.contactMethod, 40);
   const preferredDate = trimField(body.preferredDate, 40);
-  const photos = Array.isArray(body.photos) ? body.photos : null;
+  const photos = body.photos ?? [];
 
   if (fullName.length < 2) return { error: "Please enter your full name." };
   if (!EMAIL_RE.test(email)) return { error: "Please enter a valid email address." };
@@ -91,8 +91,8 @@ function validatePayload(body) {
     return { error: "Preferred date format is invalid." };
   }
 
-  if (!photos || photos.length === 0) {
-    return { error: "Please upload at least one photo." };
+  if (!Array.isArray(photos)) {
+    return { error: "Invalid photo metadata." };
   }
   if (photos.length > MAX_QUOTE_PHOTOS) {
     return { error: `You can upload up to ${MAX_QUOTE_PHOTOS} photos.` };
@@ -184,8 +184,12 @@ function buildEmailContent(data, photoLinks) {
     "Project description:",
     data.description,
     "",
-    "Private photo links (expire in 14 days):",
-    ...photoLinks.map((link, i) => `${i + 1}. ${link}`),
+    ...(photoLinks.length > 0
+      ? [
+          "Private photo links (expire in 14 days):",
+          ...photoLinks.map((link, i) => `${i + 1}. ${link}`),
+        ]
+      : ["Photos: No photos attached"]),
   ];
 
   const text = lines.join("\n");
@@ -202,13 +206,17 @@ function buildEmailContent(data, photoLinks) {
       <p><strong>Preferred date:</strong> ${escapeHtml(data.preferredDate || "Not specified")}</p>
       <p><strong>Project description:</strong></p>
       <p style="white-space: pre-wrap;">${escapeHtml(data.description)}</p>
-      <p><strong>Private photo links</strong> (expire in 14 days):</p>
+      ${
+        photoLinks.length > 0
+          ? `<p><strong>Private photo links</strong> (expire in 14 days):</p>
       <ol>
         ${photoLinks
           .map((link, i) => `<li><a href="${escapeHtml(link)}">View photo ${i + 1}</a></li>`)
           .join("")}
       </ol>
-      <p style="color:#666;font-size:12px;">These links are temporary and are not public gallery URLs.</p>
+      <p style="color:#666;font-size:12px;">These links are temporary and are not public gallery URLs.</p>`
+          : `<p><strong>Photos:</strong> No photos attached</p>`
+      }
     </div>
   `;
 
@@ -233,7 +241,7 @@ export async function POST(request) {
 
   const { data } = validated;
 
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+  if (data.photos.length > 0 && !process.env.BLOB_READ_WRITE_TOKEN) {
     console.error("[quote] BLOB_READ_WRITE_TOKEN is not configured");
     return jsonError("Quote service is temporarily unavailable.", 503);
   }

@@ -28,6 +28,8 @@
 
 html {
   scroll-behavior: smooth;
+  /* Keep anchored sections below the sticky header */
+  scroll-padding-top: 6rem;
   overflow-x: clip;
 }
 

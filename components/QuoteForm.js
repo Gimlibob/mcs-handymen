@@ -158,7 +158,6 @@ export default function QuoteForm({ initialCity = "" }) {
     }
     if (fields.description.trim().length < 10)
       next.description = "Please describe the project (at least 10 characters).";
-    if (files.length === 0) next.photos = "Please upload at least one photo.";
     if (!fields.contactMethod) next.contactMethod = "Please choose a preferred contact method.";
     return next;
   }
@@ -252,7 +251,7 @@ export default function QuoteForm({ initialCity = "" }) {
         <CheckCircle2 className="h-10 w-10 text-gold-bright" aria-hidden="true" />
         <h3 className="font-heading text-xl font-bold text-foreground">Thank you!</h3>
         <p className="text-sm text-muted">
-          Your project request has been received. We&apos;ll review your photos and contact you
+          Your project request has been received. We&apos;ll review your request and contact you
           soon.
         </p>
         <button
@@ -276,7 +275,7 @@ export default function QuoteForm({ initialCity = "" }) {
           <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
           <p>
             Sorry, we couldn&apos;t send your request right now. Please email your project
-            description and photos directly to{" "}
+            description (and any photos) directly to{" "}
             <ContactLink method="email" href={MAILTO_HREF} className="font-semibold underline">
               {BACKUP_EMAIL}
             </ContactLink>
@@ -455,8 +454,8 @@ export default function QuoteForm({ initialCity = "" }) {
 
       <Field
         id={`${formId}-photos`}
-        label="Photo Upload"
-        required
+        label="Photos"
+        optional
         error={errors.photos}
         hint={`JPG, PNG, or HEIC. Up to ${MAX_FILES} photos, ${MAX_FILE_SIZE_MB} MB each.`}
       >

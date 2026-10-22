@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Menu, X, Camera } from "lucide-react";
 import Logo from "./Logo";
+import SectionLink from "./SectionLink";
 import { NAV_LINKS, FACEBOOK_URL } from "@/lib/site-config";
 
 export default function Header() {
@@ -33,25 +34,25 @@ export default function Header() {
                 {link.label}
               </a>
             ) : (
-              <Link
+              <SectionLink
                 key={link.href}
                 href={link.href}
                 className="text-sm font-medium text-muted transition-colors hover:text-gold-bright"
               >
                 {link.label}
-              </Link>
+              </SectionLink>
             )
           )}
         </nav>
 
         <div className="hidden md:block">
-          <Link
+          <SectionLink
             href="/#quote"
             className="inline-flex items-center gap-2 rounded-lg bg-gold px-4 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-gold-bright"
           >
             <Camera className="h-4 w-4" aria-hidden="true" />
             Send Project Photos
-          </Link>
+          </SectionLink>
         </div>
 
         {/* Mobile menu toggle */}
@@ -90,25 +91,25 @@ export default function Header() {
                 {link.label}
               </a>
             ) : (
-              <Link
+              <SectionLink
                 key={link.href}
                 href={link.href}
                 className="rounded-lg px-3 py-3 text-base font-medium text-muted hover:bg-surface hover:text-gold-bright"
                 onClick={() => setOpen(false)}
               >
                 {link.label}
-              </Link>
+              </SectionLink>
             )
           )}
         </div>
-        <Link
+        <SectionLink
           href="/#quote"
           onClick={() => setOpen(false)}
           className="mt-3 flex min-h-[52px] items-center justify-center gap-2 rounded-xl bg-gold px-4 text-base font-semibold text-black hover:bg-gold-bright"
         >
           <Camera className="h-4 w-4" aria-hidden="true" />
           Send Project Photos
-        </Link>
+        </SectionLink>
       </nav>
     </header>
   );
